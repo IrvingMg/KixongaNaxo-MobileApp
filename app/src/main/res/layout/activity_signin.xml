@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_margin="16dp"
+    tools:context=".Signin">
+
+    <TextView
+        android:id="@+id/etiquetaTitulo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:text="Kixonga Naxo"
+        android:textAlignment="center"
+        android:textSize="48dp" />
+
+    <TextView
+        android:id="@+id/etiquetaNombre"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/etiquetaTitulo"
+        android:layout_marginTop="32dp"
+        android:text="Nombre"
+        android:textSize="20dp" />
+
+    <EditText
+        android:id="@+id/nombre"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/etiquetaNombre"
+        android:layout_marginTop="2dp" />
+
+    <TextView
+        android:id="@+id/etiquetaCorreo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/nombre"
+        android:layout_marginTop="16dp"
+        android:text="Correo"
+        android:textSize="20dp" />
+
+    <EditText
+        android:id="@+id/correo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/etiquetaCorreo"
+        android:layout_marginTop="2dp" />
+
+    <TextView
+        android:id="@+id/etiqutaContrasena"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/correo"
+        android:layout_marginTop="16dp"
+        android:text="Contraseña"
+        android:textSize="20dp" />
+
+    <EditText
+        android:id="@+id/contrasena"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/etiqutaContrasena"
+        android:layout_marginTop="2dp" />
+
+    <Button
+        android:id="@+id/registrar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/contrasena"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp"
+        android:text="Registrarse" />
+
+    <TextView
+        android:id="@+id/login"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:text="¿Ya tienes una cuenta? Inicia Sesión."
+        android:textStyle="bold" />
+
+</RelativeLayout>
