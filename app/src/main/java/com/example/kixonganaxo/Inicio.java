@@ -13,6 +13,14 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.widget.SimpleAdapter;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class Inicio extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -22,23 +30,13 @@ public class Inicio extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_inicio);
 
-        if(true) {
+        if(false) {
             Intent i = new Intent(Inicio.this, Login.class);
             startActivity(i);
             finish();
         }
-
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -49,6 +47,28 @@ public class Inicio extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
+        ListView listaColectas = findViewById(R.id.lista_colectas);
+
+        List<Map<String, String>> data = new ArrayList<Map<String, String>>();
+        //Ciclo
+        Map<String, String> datum = new HashMap<String, String>(2);
+        datum.put("Text1", "First line of text");
+        datum.put("Text2","Second line of text");
+        datum.put("Text3","Third line of text");
+        data.add(datum);
+        Map<String, String> datum2 = new HashMap<String, String>(2);
+        datum2.put("Text1", "First line of text");
+        datum2.put("Text2","Second line of text");
+        datum2.put("Text3","Third line of text");
+        data.add(datum2);
+        //Fin ciclo
+
+        SimpleAdapter adapter = new SimpleAdapter(this, data,
+                R.layout.multi_lines,
+                new String[] {"Text1", "Text2", "Text3"},
+                new int[] {R.id.text1, R.id.text2, R.id.text3});
+
+        listaColectas.setAdapter(adapter);
     }
 
     @Override
@@ -88,20 +108,6 @@ public class Inicio extends AppCompatActivity
     public boolean onNavigationItemSelected(MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
-
-        if (id == R.id.nav_camera) {
-            // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
-
-        } else if (id == R.id.nav_slideshow) {
-
-        } else if (id == R.id.nav_manage) {
-
-        } else if (id == R.id.nav_share) {
-
-        } else if (id == R.id.nav_send) {
-
-        }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
