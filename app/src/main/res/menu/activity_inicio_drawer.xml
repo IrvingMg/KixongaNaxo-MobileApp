@@ -9,12 +9,16 @@
             android:icon="@drawable/ic_menu_home"
             android:title="Inicio" />
         <item
+            android:id="@+id/nav_notifications"
+            android:icon="@drawable/ic_menu_notifications"
+            android:title="Notificaciones" />
+        <item
             android:id="@+id/nav_history"
             android:icon="@drawable/ic_menu_history"
             android:title="Mis colectas" />
         <item
-            android:id="@+id/nav_notifications"
-            android:icon="@drawable/ic_menu_notifications"
-            android:title="Notificaciones" />
+            android:id="@+id/nav_exit"
+            android:icon="@drawable/ic_menu_exit"
+            android:title="Cerrar sesión" />
     </group>
 </menu>
