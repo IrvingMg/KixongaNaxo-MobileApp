@@ -68,13 +68,15 @@ public class Signin extends AppCompatActivity {
                                             .setDisplayName(name).build();
 
                                     user.updateProfile(profileUpdates);
+                                    user.sendEmailVerification();
+
                                     Intent i = new Intent(Signin.this, Inicio.class);
                                     startActivity(i);
                                     finish();
                                 } else {
                                     Toast.makeText(Signin.this,
                                             "Error al registrar usuario. Intente de nuevo.",
-                                            Toast.LENGTH_SHORT).show();
+                                            Toast.LENGTH_LONG).show();
                                 }
                             }
                         });

@@ -18,6 +18,7 @@ import android.view.MenuItem;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -34,7 +35,6 @@ public class Inicio extends AppCompatActivity
     private FirebaseAuth mAuth;
     private FirebaseAuth.AuthStateListener mAuthListener;
     private FirebaseUser user;
-    ;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,9 +47,19 @@ public class Inicio extends AppCompatActivity
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 user = mAuth.getCurrentUser();
                 if (user != null) {
-                    Log.d(TAG, "Usuario logueado");
+                    NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+                    View headerView = navigationView.getHeaderView(0);
+                    TextView nombreUsuario = headerView.findViewById(R.id.nombreUsuario);
+                    nombreUsuario.setText(user.getDisplayName());
+                    TextView correoUsuario = headerView.findViewById(R.id.correoUsuario);
+                    correoUsuario.setText(user.getEmail());
+
+                    if(user.isEmailVerified() == false) {
+                        Toast.makeText(Inicio.this,
+                                "Verifique su dirección de correo.",
+                                Toast.LENGTH_SHORT).show();
+                    }
                 } else {
-                    Log.d(TAG, "No logueado");
                     Intent i = new Intent(Inicio.this, Login.class);
                     startActivity(i);
                     finish();

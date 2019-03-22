@@ -55,7 +55,7 @@ public class Login extends AppCompatActivity {
                                 } else {
                                     Toast.makeText(Login.this,
                                             "Error al iniciar sesión. Intente de nuevo.",
-                                            Toast.LENGTH_SHORT).show();
+                                            Toast.LENGTH_LONG).show();
                                 }
                             }
                         });
