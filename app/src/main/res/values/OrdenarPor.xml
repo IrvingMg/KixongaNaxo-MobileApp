@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="opcionesOrden">
+        <item>Titulo (A-Z)</item>
+        <item>Titulo (Z-A)</item>
+        <item>Lugar (A-Z)</item>
+        <item>Lugar (Z-A)</item>
+        <item>Fecha (Reciente-Antigua)</item>
+        <item>Fecha (Antigua-Reciente)</item>
+    </string-array>
+</resources>
