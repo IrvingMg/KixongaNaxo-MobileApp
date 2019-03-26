@@ -164,10 +164,6 @@ public class Inicio extends AppCompatActivity
                     .setPositiveButton("ACEPTAR", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int id) {
-                            /*
-                            ArrayList<String> values = new ArrayList<String>();
-                            ArrayAdapter<String> adapter = new ArrayAdapter<String>(Inicio.this,R.layout.multi_lines, values);
-                            listaColectas.setAdapter(adapter);*/
                             data.clear();
                             adapter.notifyDataSetChanged();
                             itemsVisibles = 0;
@@ -200,7 +196,6 @@ public class Inicio extends AppCompatActivity
                                     valorOrden = "fecha";
                                     direccionOrden = Query.Direction.DESCENDING;
                             }
-                            Log.d(TAG, "Ordenar por: " + valorOrden + " y " + direccionOrden);
                             paginaColectas(valorOrden, direccionOrden);
                         }
                     })
@@ -250,7 +245,6 @@ public class Inicio extends AppCompatActivity
             @Override
             public void onComplete(@NonNull Task<QuerySnapshot> task) {
                 totalItems = task.getResult().size();
-                Log.d(TAG, "Tamaño: "+ totalItems);
             }
         });
 
@@ -281,7 +275,6 @@ public class Inicio extends AppCompatActivity
 
                         if(scrollState == SCROLL_STATE_IDLE) {
                             if (listaColectas.getLastVisiblePosition() >= count - threshold && itemsVisibles < totalItems) {
-                                Log.d(TAG, "Cargar más...");
                                 listaColectas.addFooterView(mProgressBarFooter);
                                 Query nextQuery = colectasRef.orderBy(campo, direccion)
                                         .startAfter(lastVisible).limit(LIMITE);
@@ -321,8 +314,9 @@ public class Inicio extends AppCompatActivity
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 String colectaID = listIDs.get(position);
-                Log.d(TAG, "Colecta: " + colectaID);
-                Log.d(TAG, "Item en posición: " + position);
+                Intent i = new Intent(Inicio.this, Colecta.class);
+                i.putExtra("DocID", colectaID);
+                startActivity(i);
             }
         });
     }

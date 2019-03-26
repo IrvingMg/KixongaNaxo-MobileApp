@@ -3,7 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:showIn="navigation_view">
 
-    <group android:checkableBehavior="single">
+    <group
+        android:id="@+id/group_feature"
+        android:checkableBehavior="single">
         <item
             android:id="@+id/nav_home"
             android:icon="@drawable/ic_menu_home"
@@ -15,7 +17,11 @@
         <item
             android:id="@+id/nav_history"
             android:icon="@drawable/ic_menu_history"
-            android:title="Mis colectas" />
+            android:title="Mis etiquetas" />
+    </group>
+    <group
+        android:id="@+id/group_settings"
+        android:checkableBehavior="single">
         <item
             android:id="@+id/nav_exit"
             android:icon="@drawable/ic_menu_exit"

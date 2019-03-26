@@ -10,8 +10,17 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
+            android:name=".Colecta"
+            android:label="@string/title_activity_colecta"
+            android:parentActivityName=".Inicio"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.example.kixonganaxo.Inicio" />
+        </activity>
+        <activity
             android:name=".Restablecer"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".Inicio"
             android:theme="@style/AppTheme.NoActionBar">
