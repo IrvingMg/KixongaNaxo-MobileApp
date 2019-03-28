@@ -1,9 +1,16 @@
 package com.example.kixonganaxo;
 
+import android.app.Dialog;
+import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.net.Uri;
+import android.provider.Telephony;
+import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 
@@ -20,13 +27,37 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.SetOptions;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 public class Colecta extends AppCompatActivity implements
     PlaneacionFragment.OnFragmentInteractionListener,
     RecoleccionFragment.OnFragmentInteractionListener{
 
     private final String TAG = "KixongaNaxo";
-    private Bundle extras;
+    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private String docId;
+    private Map<String, Object> infoColecta;
+    private FirebaseAuth mAuth;
+    private FirebaseUser user;
+    private ArrayList<Map<String, String>> participantes;
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
      * fragments for each of the sections. We use a
@@ -47,7 +78,7 @@ public class Colecta extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_colecta);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         // Create the adapter that will return a fragment for each of the three
@@ -72,9 +103,50 @@ public class Colecta extends AppCompatActivity implements
             }
         });
 
-        extras = getIntent().getExtras();
-    }
+        mAuth = FirebaseAuth.getInstance();
+        user = mAuth.getCurrentUser();
+        docId = getIntent().getExtras().getString("DocID");
+        db.collection("colectas").document(docId).get()
+                .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                        if (task.isSuccessful()) {
+                            DocumentSnapshot documentSnapshot = task.getResult();
+                            if (documentSnapshot.exists()) {
+                                infoColecta = documentSnapshot.getData();
 
+                                String titulo = infoColecta.get("titulo").toString();
+                                ActionBar actionBar = getSupportActionBar();
+                                actionBar.setTitle(titulo);
+
+                                participantes = (ArrayList<Map<String, String>>) infoColecta.get("participantes");
+
+                                if(participantes.size() != 0) {
+                                    String nombre = user.getDisplayName();
+                                    String usuarioId = user.getUid();
+
+                                    for (int i = 0; i < participantes.size(); i++) {
+                                        String id = participantes.get(i).get("id_usuario");
+
+                                        if (id.equals(usuarioId) == true) {
+                                            toolbar.getMenu().findItem(R.id.subir_etiquetas).setVisible(true);
+                                        } else {
+                                            toolbar.getMenu().findItem(R.id.nuevo_participante).setVisible(true);
+                                        }
+                                    }
+                                } else {
+                                    toolbar.getMenu().findItem(R.id.nuevo_participante).setVisible(true);
+                                }
+
+                            } else {
+                                Log.d(TAG, "No such document");
+                            }
+                        } else {
+                            Log.d(TAG, "get failed with ", task.getException());
+                        }
+                    }
+                });
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -90,13 +162,60 @@ public class Colecta extends AppCompatActivity implements
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.nuevo_participante) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(Colecta.this);
+            builder.setMessage("¿Participar en la colecta?")
+                    .setPositiveButton("ACEPTAR", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            final ProgressDialog progressDialog = ProgressDialog.show(Colecta.this, "",
+                                    "Añadiendo participante...", true);
+                            Map<String, String> usuario = new HashMap<>();
+                            usuario.put("id_usuario", user.getUid());
+                            usuario.put("nombre_usuario", user.getDisplayName());
+                            participantes.add(usuario);
+
+                            Map<String, Object> datos = new HashMap<>();
+                            datos.put("participantes", participantes);
+
+                            Log.d(TAG, docId);
+                            db.collection("colectas").document(docId)
+                                    .set(datos, SetOptions.merge())
+                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                        @Override
+                                        public void onSuccess(Void aVoid) {
+                                            progressDialog.dismiss();
+
+                                            Toolbar toolbar = findViewById(R.id.toolbar);
+                                            toolbar.getMenu().findItem(R.id.nuevo_participante).setVisible(false);
+                                            toolbar.getMenu().findItem(R.id.subir_etiquetas).setVisible(true);
+                                        }
+                                    })
+                                    .addOnFailureListener(new OnFailureListener() {
+                                        @Override
+                                        public void onFailure(@NonNull Exception e) {
+                                            Log.w(TAG, "Error writing document", e);
+                                        }
+                                    });
+                        }
+                    })
+                    .setNegativeButton("CANCELAR", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            // User cancelled the dialog
+                        }
+                    });
+
+            builder.create().show();
+            return true;
+        }
+
+        if (id == R.id.subir_etiquetas) {
+            Log.d(TAG, "Subir etiquetas...");
             return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
+
 
     @Override
     public void onFragmentInteraction(Uri uri) {
@@ -119,11 +238,11 @@ public class Colecta extends AppCompatActivity implements
             switch (position) {
                 case 0:
                     PlaneacionFragment planeacionFragment = new PlaneacionFragment();
-                    planeacionFragment.setArguments(extras);
+                    planeacionFragment.setArguments(getIntent().getExtras());
                     return planeacionFragment;
                 case 1:
                     RecoleccionFragment recoleccionFragment = new RecoleccionFragment();
-                    recoleccionFragment.setArguments(extras);
+                    recoleccionFragment.setArguments(getIntent().getExtras());
                     return recoleccionFragment;
             }
             return null;

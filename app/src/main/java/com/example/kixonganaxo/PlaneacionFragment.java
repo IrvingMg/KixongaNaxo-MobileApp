@@ -73,7 +73,6 @@ public class PlaneacionFragment extends Fragment {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             mParam1 = getArguments().getString(ARG_PARAM1);
-            Log.d(TAG, "Recibido en Fragment: " + mParam1);
         }
     }
 
@@ -82,6 +81,7 @@ public class PlaneacionFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_planeacion, container, false);
+
         db.collection("colectas").document(mParam1).get()
                 .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
                     @Override
@@ -113,12 +113,6 @@ public class PlaneacionFragment extends Fragment {
                                         formatoPlaneacion.get(i).setText(valor.toString());
                                     }
                                 }
-                                /*
-                                ScrollView scrollView = view.findViewById(R.id.containerScroll);
-                                RelativeLayout relativeLayout = view.findViewById(R.id.containerRelative);
-                                ViewGroup.LayoutParams layoutParams = scrollView.getLayoutParams();
-                                layoutParams.height = relativeLayout.getHeight();
-                                */
                             } else {
                                 Log.d(TAG, "No such document");
                             }
@@ -127,7 +121,6 @@ public class PlaneacionFragment extends Fragment {
                         }
                     }
                 });
-
 
         return view;
     }

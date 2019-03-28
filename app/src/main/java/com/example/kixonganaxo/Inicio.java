@@ -168,7 +168,6 @@ public class Inicio extends AppCompatActivity
                             adapter.notifyDataSetChanged();
                             itemsVisibles = 0;
                             listIDs.clear();
-                            Log.d(TAG, "Reset");
 
                             opcionSelect = opcionAux;
                             switch (opcionSelect) {
@@ -241,14 +240,14 @@ public class Inicio extends AppCompatActivity
         final int LIMITE = 5;
         final ProgressBar progreso = findViewById(R.id.progreso);
 
-        colectasRef.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+        colectasRef.whereEqualTo("publico", true).get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
             @Override
             public void onComplete(@NonNull Task<QuerySnapshot> task) {
                 totalItems = task.getResult().size();
             }
         });
 
-        Query firstQuery = colectasRef.orderBy(campo, direccion).limit(LIMITE);
+        Query firstQuery = colectasRef.whereEqualTo("publico", true).orderBy(campo, direccion).limit(LIMITE);
         firstQuery.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
 
             @Override
@@ -276,7 +275,9 @@ public class Inicio extends AppCompatActivity
                         if(scrollState == SCROLL_STATE_IDLE) {
                             if (listaColectas.getLastVisiblePosition() >= count - threshold && itemsVisibles < totalItems) {
                                 listaColectas.addFooterView(mProgressBarFooter);
-                                Query nextQuery = colectasRef.orderBy(campo, direccion)
+                                Query nextQuery = colectasRef
+                                        .whereEqualTo("publico", true)
+                                        .orderBy(campo, direccion)
                                         .startAfter(lastVisible).limit(LIMITE);
                                 nextQuery.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                                     @Override
