@@ -49,6 +49,7 @@ import java.util.Objects;
 
 public class Colecta extends AppCompatActivity implements
     PlaneacionFragment.OnFragmentInteractionListener,
+    MapaFragment.OnFragmentInteractionListener,
     RecoleccionFragment.OnFragmentInteractionListener{
 
     private final String TAG = "KixongaNaxo";
@@ -241,17 +242,21 @@ public class Colecta extends AppCompatActivity implements
                     planeacionFragment.setArguments(getIntent().getExtras());
                     return planeacionFragment;
                 case 1:
+                    MapaFragment mapaFragment = new MapaFragment();
+                    return mapaFragment;
+                case 2:
                     RecoleccionFragment recoleccionFragment = new RecoleccionFragment();
                     recoleccionFragment.setArguments(getIntent().getExtras());
                     return recoleccionFragment;
+                default:
+                    return null;
             }
-            return null;
         }
 
         @Override
         public int getCount() {
-            // Show 2 total pages.
-            return 2;
+            // Show 3 total pages.
+            return 3;
         }
     }
 }
