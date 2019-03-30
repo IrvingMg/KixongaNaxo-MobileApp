@@ -1,24 +1,22 @@
 package com.example.kixonganaxo;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SimpleCursorAdapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.ListAdapter;
+import android.widget.ListView;
+import android.widget.SimpleAdapter;
 
-import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
-import com.google.android.gms.maps.CameraUpdate;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapView;
-import com.google.android.gms.maps.MapsInitializer;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.LatLng;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -72,12 +70,38 @@ public class RecoleccionFragment extends Fragment {
         }
     }
 
-    @SuppressLint("MissingPermission")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_recoleccion, container, false);
+        View v = inflater.inflate(R.layout.fragment_recoleccion, container, false);
+        /*
+        ArrayList<String> listaEjemplares = new ArrayList<String>();
+        listaEjemplares.add("Planta #1");
+        listaEjemplares.add("Planta #2");
+
+        ArrayAdapter<String> itemsAdapter =
+                new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, listaEjemplares);
+*/
+        List<Map<String, String>> data = new ArrayList<Map<String, String>>();
+
+        for (int i = 0; i < 10; i++) {
+            Map<String, String> datum = new HashMap<String, String>(2);
+            datum.put("Text1", "Nombre planta " + i);
+            datum.put("Text2", "Coordenadas");
+            data.add(datum);
+        }
+
+        ListView listView = v.findViewById(R.id.ejemplares_recolectados);
+        ListAdapter adapter = new SimpleAdapter(
+                getActivity(),
+                data,
+                android.R.layout.simple_list_item_2,
+                new String[] {"Text1","Text2"}, // Array of cursor columns to bind to.
+                new int[] {android.R.id.text1, android.R.id.text2});
+        listView.setAdapter(adapter);
+
+        return v;
     }
 
     // TODO: Rename method, update argument and hook method into UI event

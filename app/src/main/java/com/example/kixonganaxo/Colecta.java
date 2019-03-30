@@ -29,6 +29,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.kixonganaxo.dummy.DummyContent;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -50,7 +51,7 @@ import java.util.Objects;
 public class Colecta extends AppCompatActivity implements
     PlaneacionFragment.OnFragmentInteractionListener,
     MapaFragment.OnFragmentInteractionListener,
-    RecoleccionFragment.OnFragmentInteractionListener{
+    RecoleccionFragment.OnFragmentInteractionListener {
 
     private final String TAG = "KixongaNaxo";
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -59,19 +60,7 @@ public class Colecta extends AppCompatActivity implements
     private FirebaseAuth mAuth;
     private FirebaseUser user;
     private ArrayList<Map<String, String>> participantes;
-    /**
-     * The {@link android.support.v4.view.PagerAdapter} that will provide
-     * fragments for each of the sections. We use a
-     * {@link FragmentPagerAdapter} derivative, which will keep every
-     * loaded fragment in memory. If this becomes too memory intensive, it
-     * may be best to switch to a
-     * {@link android.support.v4.app.FragmentStatePagerAdapter}.
-     */
     private SectionsPagerAdapter mSectionsPagerAdapter;
-
-    /**
-     * The {@link ViewPager} that will host the section contents.
-     */
     private ViewPager mViewPager;
 
     @Override
@@ -123,7 +112,6 @@ public class Colecta extends AppCompatActivity implements
                                 participantes = (ArrayList<Map<String, String>>) infoColecta.get("participantes");
 
                                 if(participantes.size() != 0) {
-                                    String nombre = user.getDisplayName();
                                     String usuarioId = user.getUid();
 
                                     for (int i = 0; i < participantes.size(); i++) {
@@ -178,7 +166,6 @@ public class Colecta extends AppCompatActivity implements
                             Map<String, Object> datos = new HashMap<>();
                             datos.put("participantes", participantes);
 
-                            Log.d(TAG, docId);
                             db.collection("colectas").document(docId)
                                     .set(datos, SetOptions.merge())
                                     .addOnSuccessListener(new OnSuccessListener<Void>() {
@@ -243,6 +230,7 @@ public class Colecta extends AppCompatActivity implements
                     return planeacionFragment;
                 case 1:
                     MapaFragment mapaFragment = new MapaFragment();
+                    mapaFragment.setArguments(getIntent().getExtras());
                     return mapaFragment;
                 case 2:
                     RecoleccionFragment recoleccionFragment = new RecoleccionFragment();
