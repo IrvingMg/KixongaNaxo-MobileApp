@@ -72,7 +72,7 @@ public class PlaneacionFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.fragment_planeacion, container, false);
+        final View view = inflater.inflate(R.layout.fragment_planeacion, container, false);
 
         db.collection("colectas").document(mParam1).get()
                 .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
@@ -81,15 +81,15 @@ public class PlaneacionFragment extends Fragment {
                         if (task.isSuccessful()) {
                             DocumentSnapshot documentSnapshot = task.getResult();
                             if (documentSnapshot.exists()) {
-                                TextView responsable = getView().findViewById(R.id.responsable);
-                                TextView objetivo = getView().findViewById(R.id.objetivo);
-                                TextView tipo = getView().findViewById(R.id.tipo);
-                                TextView fecha = getView().findViewById(R.id.fecha);
-                                TextView lugar = getView().findViewById(R.id.lugar);
-                                TextView especies = getView().findViewById(R.id.especies);
-                                TextView material = getView().findViewById(R.id.material);
-                                TextView infoConsulta = getView().findViewById(R.id.infoConsulta);
-                                TextView infoAdicional = getView().findViewById(R.id.infoAdicional);
+                                TextView responsable = view.findViewById(R.id.responsable);
+                                TextView objetivo = view.findViewById(R.id.objetivo);
+                                TextView tipo = view.findViewById(R.id.tipo);
+                                TextView fecha = view.findViewById(R.id.fecha);
+                                TextView lugar = view.findViewById(R.id.lugar);
+                                TextView especies = view.findViewById(R.id.especies);
+                                TextView material = view.findViewById(R.id.material);
+                                TextView infoConsulta = view.findViewById(R.id.infoConsulta);
+                                TextView infoAdicional = view.findViewById(R.id.infoAdicional);
 
                                 List<TextView> formatoPlaneacion = Arrays.asList(responsable, objetivo, tipo, fecha,
                                         lugar, especies, material, infoConsulta, infoAdicional);

@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v4.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".EtiquetaFragment">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp">
+        <TextView
+            android:id="@+id/etiqueta_habito"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Hábito de la planta"/>
+        <RadioGroup
+            android:id="@+id/habito"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:checkedButton="@+id/rastrera"
+            android:orientation="vertical"
+            android:layout_below="@+id/etiqueta_habito">
+            <RadioButton
+                android:id="@+id/rastrera"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Rastrera"/>
+            <RadioButton
+                android:id="@+id/epifita"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Epifita"/>
+            <RadioButton
+                android:id="@+id/hierba"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Hierba"/>
+            <RadioButton
+                android:id="@+id/arbusto"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Arbusto"/>
+            <RadioButton
+                android:id="@+id/arbol"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Árbol"/>
+        </RadioGroup>
+
+        <android.support.design.widget.TextInputLayout
+            android:id="@+id/dap"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/habito"
+            android:hint="Diámetro del tallo (DAP)">
+
+            <android.support.design.widget.TextInputEditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="numberDecimal" />
+        </android.support.design.widget.TextInputLayout>
+
+        <android.support.design.widget.TextInputLayout
+            android:id="@+id/abundancia"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/dap"
+            android:hint="Abundancia de la planta">
+
+            <android.support.design.widget.TextInputEditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="numberDecimal" />
+        </android.support.design.widget.TextInputLayout>
+
+        <android.support.design.widget.TextInputLayout
+            android:id="@+id/caracteristicas_lugar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/abundancia"
+            android:hint="Características del lugar">
+
+            <android.support.design.widget.TextInputEditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textMultiLine" />
+        </android.support.design.widget.TextInputLayout>
+
+        <android.support.design.widget.TextInputLayout
+            android:id="@+id/descripcion_flores"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/caracteristicas_lugar"
+            android:hint="Descripción de las flores">
+
+            <android.support.design.widget.TextInputEditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textMultiLine" />
+        </android.support.design.widget.TextInputLayout>
+
+        <android.support.design.widget.TextInputLayout
+            android:id="@+id/descripcion_hojas"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/descripcion_flores"
+            android:hint="Descripción de las hojas">
+
+            <android.support.design.widget.TextInputEditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textMultiLine" />
+        </android.support.design.widget.TextInputLayout>
+
+        <android.support.design.widget.TextInputLayout
+            android:id="@+id/descripcion_latex"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/descripcion_hojas"
+            android:hint="Descripción del látex (Opcional)">
+
+            <android.support.design.widget.TextInputEditText
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textMultiLine" />
+        </android.support.design.widget.TextInputLayout>
+    </RelativeLayout>
+
+</android.support.v4.widget.NestedScrollView>

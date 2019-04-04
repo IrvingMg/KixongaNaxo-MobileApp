@@ -3,9 +3,11 @@ package com.example.kixonganaxo;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.net.Uri;
 import android.provider.Telephony;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.TabLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -62,13 +64,14 @@ public class Colecta extends AppCompatActivity implements
     private ArrayList<Map<String, String>> participantes;
     private SectionsPagerAdapter mSectionsPagerAdapter;
     private ViewPager mViewPager;
+    private boolean participa = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_colecta);
 
-        final Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         // Create the adapter that will return a fragment for each of the three
@@ -88,14 +91,46 @@ public class Colecta extends AppCompatActivity implements
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+
+                if(participa == true) {
+                    Intent i = new Intent(Colecta.this, Recolectar.class);
+                    i.putExtra("DocID", docId);
+                    startActivityForResult(i, 0);
+                }else {
+                    Snackbar.make(view,
+                            "Por favor, regístrate como participante.",
+                            Snackbar.LENGTH_LONG)
+                            .setAction("Action", null).show();
+                }
+
             }
         });
 
         mAuth = FirebaseAuth.getInstance();
         user = mAuth.getCurrentUser();
+
         docId = getIntent().getExtras().getString("DocID");
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == 0) {
+            if (resultCode == RESULT_OK) {
+                Log.d(TAG, "Guardado!");
+                Toast.makeText(Colecta.this,
+                        "Información guardada localmente.",
+                        Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(final Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_colecta, menu);
+
         db.collection("colectas").document(docId).get()
                 .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
                     @Override
@@ -111,22 +146,22 @@ public class Colecta extends AppCompatActivity implements
 
                                 participantes = (ArrayList<Map<String, String>>) infoColecta.get("participantes");
 
-                                if(participantes.size() != 0) {
+                                if (participantes.size() != 0) {
                                     String usuarioId = user.getUid();
 
                                     for (int i = 0; i < participantes.size(); i++) {
                                         String id = participantes.get(i).get("id_usuario");
 
                                         if (id.equals(usuarioId) == true) {
-                                            toolbar.getMenu().findItem(R.id.subir_etiquetas).setVisible(true);
+                                            menu.findItem(R.id.subir_etiquetas).setVisible(true);
+                                            participa = true;
                                         } else {
-                                            toolbar.getMenu().findItem(R.id.nuevo_participante).setVisible(true);
+                                            menu.findItem(R.id.nuevo_participante).setVisible(true);
                                         }
                                     }
                                 } else {
-                                    toolbar.getMenu().findItem(R.id.nuevo_participante).setVisible(true);
+                                    menu.findItem(R.id.nuevo_participante).setVisible(true);
                                 }
-
                             } else {
                                 Log.d(TAG, "No such document");
                             }
@@ -135,12 +170,6 @@ public class Colecta extends AppCompatActivity implements
                         }
                     }
                 });
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_colecta, menu);
         return true;
     }
 
@@ -176,6 +205,7 @@ public class Colecta extends AppCompatActivity implements
                                             Toolbar toolbar = findViewById(R.id.toolbar);
                                             toolbar.getMenu().findItem(R.id.nuevo_participante).setVisible(false);
                                             toolbar.getMenu().findItem(R.id.subir_etiquetas).setVisible(true);
+                                            participa = true;
                                         }
                                     })
                                     .addOnFailureListener(new OnFailureListener() {
@@ -210,10 +240,6 @@ public class Colecta extends AppCompatActivity implements
 
     }
 
-    /**
-     * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
-     * one of the sections/tabs/pages.
-     */
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
         public SectionsPagerAdapter(FragmentManager fm) {
