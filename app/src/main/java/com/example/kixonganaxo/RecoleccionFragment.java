@@ -4,12 +4,16 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SimpleCursorAdapter;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
 import android.widget.ListView;
@@ -20,9 +24,13 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.GeoPoint;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
@@ -51,6 +59,7 @@ public class RecoleccionFragment extends Fragment {
     private FirebaseUser user;
     private String docId;
     private List<Map<String, String>> data = new ArrayList<Map<String, String>>();
+    private List<String> etiquetaIDs = new ArrayList<>();
 
     private OnFragmentInteractionListener mListener;
 
@@ -87,15 +96,16 @@ public class RecoleccionFragment extends Fragment {
         infoUsuario.put("id_usuario", user.getUid());
         infoUsuario.put("nombre_usuario", user.getDisplayName());
 
+        data.clear();
         ListView listView = v.findViewById(R.id.ejemplares_recolectados);
-        ListAdapter adapter = new SimpleAdapter(
+        final ListAdapter adapter = new SimpleAdapter(
                 getActivity(),
                 data,
                 android.R.layout.simple_list_item_2,
                 new String[] {"Text1","Text2"}, // Array of cursor columns to bind to.
                 new int[] {android.R.id.text1, android.R.id.text2});
         listView.setAdapter(adapter);
-
+/*
         db.collection("etiquetas")
                 .whereEqualTo("id_colecta", docId)
                 .whereEqualTo("colector", infoUsuario).get()
@@ -122,8 +132,67 @@ public class RecoleccionFragment extends Fragment {
                 }
             }
         });
+        */
+
+        registerForContextMenu(listView);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                String etiquetaID = etiquetaIDs.get(position);
+                Log.d(TAG, "ID: " + etiquetaID);
+            }
+        });
+        db.collection("etiquetas")
+                .whereEqualTo("id_colecta", docId)
+                .whereEqualTo("colector", infoUsuario)
+                .orderBy("nombre_comun", Query.Direction.ASCENDING)
+                .addSnapshotListener(new EventListener<QuerySnapshot>() {
+                    @Override
+                    public void onEvent(@Nullable QuerySnapshot querySnapshot,
+                                        @Nullable FirebaseFirestoreException e) {
+                        if (e != null) {
+                            Log.w(TAG, "Listen error", e);
+                            return;
+                        }
+
+                        for (DocumentChange change : querySnapshot.getDocumentChanges()) {
+                            if (change.getType() == DocumentChange.Type.ADDED) {
+                                Log.d(TAG, "ID:" + change.getDocument().getId());
+                                etiquetaIDs.add(change.getDocument().getId());
+
+                                Map<String, String> datum = new HashMap<String, String>(2);
+                                datum.put("Text1", change.getDocument().get("nombre_comun").toString());
+                                GeoPoint geoPoint = (GeoPoint) change.getDocument().get("ubicacion");
+                                Double latitud = geoPoint.getLatitude();
+                                Double longitud = geoPoint.getLongitude();
+                                datum.put("Text2", "Latitud: " + latitud + " Longitud: " + longitud);
+                                data.add(datum);
+                            }
+
+                            String source = querySnapshot.getMetadata().isFromCache() ?
+                                    "local cache" : "server";
+                            Log.d(TAG, "Data fetched from " + source);
+                        }
+                        ((SimpleAdapter) adapter).notifyDataSetChanged();
+                    }
+                });
 
         return v;
+    }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+
+        AdapterView.AdapterContextMenuInfo cmi =
+                (AdapterView.AdapterContextMenuInfo) menuInfo;
+        menu.add(1, cmi.position, 0, "Eliminar");
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        Log.d(TAG, "" + item.getItemId());
+        return true;
     }
 
     // TODO: Rename method, update argument and hook method into UI event

@@ -118,9 +118,8 @@ public class Colecta extends AppCompatActivity implements
 
         if (requestCode == 0) {
             if (resultCode == RESULT_OK) {
-                Log.d(TAG, "Guardado!");
                 Toast.makeText(Colecta.this,
-                        "Información guardada localmente.",
+                        "Información guardada.",
                         Toast.LENGTH_LONG).show();
             }
         }
