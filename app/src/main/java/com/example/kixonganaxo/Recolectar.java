@@ -5,6 +5,7 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TabLayout;
 import android.support.design.widget.FloatingActionButton;
@@ -40,37 +41,29 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.SetOptions;
 
+import java.io.File;
 import java.io.Serializable;
 import java.sql.Time;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Recolectar extends AppCompatActivity implements
     InfoBasicaFragment.OnFragmentInteractionListener,
     EtiquetaFragment.OnFragmentInteractionListener {
 
-    /**
-     * The {@link android.support.v4.view.PagerAdapter} that will provide
-     * fragments for each of the sections. We use a
-     * {@link FragmentPagerAdapter} derivative, which will keep every
-     * loaded fragment in memory. If this becomes too memory intensive, it
-     * may be best to switch to a
-     * {@link android.support.v4.app.FragmentStatePagerAdapter}.
-     */
     private SectionsPagerAdapter mSectionsPagerAdapter;
     private final String TAG = "KixongaNaxo";
-
-    /**
-     * The {@link ViewPager} that will host the section contents.
-     */
     private ViewPager mViewPager;
     private String colectaId;
     private FirebaseUser user;
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private Map<String, Object> docData = new HashMap<>();
     private String etiquetaId;
+    private File directory;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -115,8 +108,21 @@ public class Recolectar extends AppCompatActivity implements
         String fecha = sdf.format(new Date());
         docData.put("fecha_colecta", fecha);
 
+        ArrayList<String> audios = new ArrayList<>();
+        docData.put("audios", audios);
+
+        ArrayList<String> fotos = new ArrayList<>();
+        docData.put("fotografias", fotos);
+
         DocumentReference etiquetaRef = db.collection("etiquetas").document();
         etiquetaId = etiquetaRef.getId();
+
+        directory = new File(Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_DOCUMENTS), "Notas/" + colectaId +"/" + etiquetaId);
+        if (!directory.mkdirs()) {
+            Log.e(TAG, "Directory not created");
+        }
+        docData.put("pathLocal", directory);
     }
 
     @Override
@@ -215,6 +221,16 @@ public class Recolectar extends AppCompatActivity implements
             TextInputLayout latx = findViewById(R.id.descripcion_latex);
             String latex = latx.getEditText().getText().toString();
 
+            // Notas de campo
+            ArrayList<String> audios = new ArrayList<>();
+            for (File f : directory.listFiles()) {
+                if (f.isFile()) {
+                    String name = f.getName();
+                    audios.add(name);
+                }
+            }
+            docData.remove("pathLocal");
+
             docData.put("nombre_comun", nombre);
             docData.put("ubicacion", ubicacion);
             docData.put("habito", habito);
@@ -224,6 +240,7 @@ public class Recolectar extends AppCompatActivity implements
             docData.put("descripcion_flores", flores);
             docData.put("descripcion_hojas", hojas);
             docData.put("descripcion_latex", latex);
+            docData.put("audios", audios);
 
             if ( nombre.isEmpty()) {
                 Toast.makeText(Recolectar.this,

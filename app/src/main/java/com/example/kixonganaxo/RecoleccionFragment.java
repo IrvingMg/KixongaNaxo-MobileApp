@@ -105,34 +105,6 @@ public class RecoleccionFragment extends Fragment {
                 new String[] {"Text1","Text2"}, // Array of cursor columns to bind to.
                 new int[] {android.R.id.text1, android.R.id.text2});
         listView.setAdapter(adapter);
-/*
-        db.collection("etiquetas")
-                .whereEqualTo("id_colecta", docId)
-                .whereEqualTo("colector", infoUsuario).get()
-        .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                if(task.isSuccessful()) {
-                    QuerySnapshot querySnapshot = task.getResult();
-                    if(querySnapshot.isEmpty() == false) {
-                        textView.setVisibility(View.GONE);
-                        for (DocumentSnapshot documentSnapshot : querySnapshot) {
-                            Map<String, String> datum = new HashMap<String, String>(2);
-                            datum.put("Text1", documentSnapshot.get("nombre_comun").toString());
-                            GeoPoint geoPoint = (GeoPoint) documentSnapshot.get("ubicacion");
-                            Double latitud = geoPoint.getLatitude();
-                            Double longitud = geoPoint.getLongitude();
-                            datum.put("Text2", "Latitud: " + latitud + " Longitud: " + longitud);
-                            data.add(datum);
-                        }
-
-                    } else {
-                        textView.setVisibility(View.VISIBLE);
-                    }
-                }
-            }
-        });
-        */
 
         registerForContextMenu(listView);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -157,7 +129,6 @@ public class RecoleccionFragment extends Fragment {
 
                         for (DocumentChange change : querySnapshot.getDocumentChanges()) {
                             if (change.getType() == DocumentChange.Type.ADDED) {
-                                Log.d(TAG, "ID:" + change.getDocument().getId());
                                 etiquetaIDs.add(change.getDocument().getId());
 
                                 Map<String, String> datum = new HashMap<String, String>(2);
@@ -168,10 +139,6 @@ public class RecoleccionFragment extends Fragment {
                                 datum.put("Text2", "Latitud: " + latitud + " Longitud: " + longitud);
                                 data.add(datum);
                             }
-
-                            String source = querySnapshot.getMetadata().isFromCache() ?
-                                    "local cache" : "server";
-                            Log.d(TAG, "Data fetched from " + source);
                         }
                         ((SimpleAdapter) adapter).notifyDataSetChanged();
                     }

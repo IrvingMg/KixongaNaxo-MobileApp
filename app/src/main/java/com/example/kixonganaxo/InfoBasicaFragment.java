@@ -9,8 +9,10 @@ import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TextInputLayout;
@@ -20,7 +22,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListView;
+import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -29,38 +34,39 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import org.w3c.dom.Text;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
+import static android.support.v4.content.ContextCompat.getDataDir;
 import static android.support.v4.content.ContextCompat.getSystemService;
 
-
-/**
- * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link InfoBasicaFragment.OnFragmentInteractionListener} interface
- * to handle interaction events.
- * Use the {@link InfoBasicaFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class InfoBasicaFragment extends Fragment {
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String DATOS = "DocDatos";
     private final String TAG = "KixongaNaxo";
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private Location mlocation;
-
-    // TODO: Rename and change types of parameters
     private Map<String, Object> docData;
     private OnFragmentInteractionListener mListener;
+    private Button recordButton = null;
+    private MediaRecorder recorder = null;
+    private static String fileName = null;
+    private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
+    private boolean mStartRecording = true;
+    private List<String> pathNotas;
+    private List<String> data = new ArrayList<>();
+    private ListView listaNotas;
+    private ArrayAdapter<String> adapter;
 
     public InfoBasicaFragment() {
         // Required empty public constructor
     }
 
-    // TODO: Rename and change types and number of parameters
     public static InfoBasicaFragment newInstance(Map<String, Object> docData) {
         InfoBasicaFragment fragment = new InfoBasicaFragment();
         Bundle args = new Bundle();
@@ -80,9 +86,16 @@ public class InfoBasicaFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.fragment_info_basica, container, false);
 
+        final View view = inflater.inflate(R.layout.fragment_info_basica, container, false);
+
+        data.clear();
+        listaNotas = view.findViewById(R.id.lista_notas);
+        adapter = new ArrayAdapter<String>(getActivity(),
+                android.R.layout.simple_list_item_1, android.R.id.text1, data);
+        listaNotas.setAdapter(adapter);
+
+        // GPS
         Button button = (Button) view.findViewById(R.id.GPS);
         final TextInputLayout latitud = view.findViewById(R.id.latitud);
         final TextInputLayout longitud = view.findViewById(R.id.longitud);
@@ -90,7 +103,6 @@ public class InfoBasicaFragment extends Fragment {
             @Override
             public void onLocationChanged(Location location) {
                 mlocation = location;
-
                 latitud.getEditText().setText(String.valueOf(location.getLatitude()));
                 longitud.getEditText().setText(String.valueOf(location.getLongitude()));
             }
@@ -108,9 +120,6 @@ public class InfoBasicaFragment extends Fragment {
             }
         };
 
-        // Now first make a criteria with your requirements
-        // this is done to save the battery life of the device
-        // there are various other other criteria you can search for..
         final Criteria criteria = new Criteria();
         criteria.setAccuracy(Criteria.ACCURACY_COARSE);
         criteria.setPowerRequirement(Criteria.POWER_LOW);
@@ -121,34 +130,97 @@ public class InfoBasicaFragment extends Fragment {
         criteria.setHorizontalAccuracy(Criteria.ACCURACY_HIGH);
         criteria.setVerticalAccuracy(Criteria.ACCURACY_HIGH);
 
-        // Now create a location manager
         final LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
-
-        // This is the Best And IMPORTANT part
         final Looper looper = null;
 
-        // Now whenever the button is clicked fetch the location one time
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
+                if (ActivityCompat.checkSelfPermission(getContext(),
+                        Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(),
+                        Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                     return;
                 }
                 locationManager.requestSingleUpdate(criteria, locationListener, looper);
             }
         });
 
+        // Botón Audio
+        ActivityCompat.requestPermissions(getActivity(), permissions, REQUEST_RECORD_AUDIO_PERMISSION);
+
+        final Button record = view.findViewById(R.id.audio);
+        record.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onRecord(mStartRecording);
+                if (mStartRecording) {
+                    record.setText("Detener");
+                    view.setTag(0);
+                } else {
+                    record.setText("Grabar Nota");
+                    view.setTag(1);
+                }
+                mStartRecording = !mStartRecording;
+
+            }
+        });
+
         return view;
     }
 
-    // TODO: Rename method, update argument and hook method into UI event
+    // Requesting permission to RECORD_AUDIO
+    private boolean permissionToRecordAccepted = false;
+    private String [] permissions = {Manifest.permission.RECORD_AUDIO};
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode){
+            case REQUEST_RECORD_AUDIO_PERMISSION:
+                permissionToRecordAccepted  = grantResults[0] == PackageManager.PERMISSION_GRANTED;
+                break;
+        }
+        if (!permissionToRecordAccepted ) getActivity().finish();
+
+    }
+
+    private void onRecord(boolean start) {
+        if (start) {
+            startRecording();
+        } else {
+            stopRecording();
+        }
+    }
+
+    private void startRecording() {
+        fileName = docData.get("pathLocal") + "/" + UUID.randomUUID().toString() +".3gp";
+        recorder = new MediaRecorder();
+        recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+        recorder.setOutputFile(fileName);
+        recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+
+        try {
+            recorder.prepare();
+        } catch (IOException e) {
+            Log.e(TAG, "prepare() failed");
+        }
+
+        recorder.start();
+    }
+
+    private void stopRecording() {
+        int index = fileName.lastIndexOf("/");
+        String nota = fileName.substring(index + 1);
+
+        recorder.stop();
+        recorder.release();
+        recorder = null;
+
+        data.add(nota);
+        adapter.notifyDataSetChanged();
+    }
+
     public void onButtonPressed(Uri uri) {
         if (mListener != null) {
             mListener.onFragmentInteraction(uri);
@@ -173,20 +245,7 @@ public class InfoBasicaFragment extends Fragment {
         mListener = null;
     }
 
-
-
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
     public interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
     }
 }
