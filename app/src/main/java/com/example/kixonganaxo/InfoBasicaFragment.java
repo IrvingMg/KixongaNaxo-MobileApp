@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
@@ -14,10 +15,12 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Looper;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.FileProvider;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -37,12 +40,15 @@ import org.w3c.dom.Text;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static android.app.Activity.RESULT_OK;
 import static android.support.v4.content.ContextCompat.getDataDir;
 import static android.support.v4.content.ContextCompat.getSystemService;
 
@@ -55,13 +61,23 @@ public class InfoBasicaFragment extends Fragment {
     private OnFragmentInteractionListener mListener;
     private Button recordButton = null;
     private MediaRecorder recorder = null;
-    private static String fileName = null;
+    private String notaName = null;
     private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
     private boolean mStartRecording = true;
     private List<String> pathNotas;
-    private List<String> data = new ArrayList<>();
+    private List<String> dataNotas = new ArrayList<>();
     private ListView listaNotas;
-    private ArrayAdapter<String> adapter;
+    private ArrayAdapter<String> adapterNotas;
+    // Requesting permission to RECORD_AUDIO
+    private boolean permissionToRecordAccepted = false;
+    private String [] permissions = {Manifest.permission.RECORD_AUDIO};
+    private String fotoName = null;
+    private List<String> dataFotos = new ArrayList<>();
+    private ListView listaFotos;
+    private ArrayAdapter<String> adapterFotos;
+
+
+
 
     public InfoBasicaFragment() {
         // Required empty public constructor
@@ -88,12 +104,6 @@ public class InfoBasicaFragment extends Fragment {
                              Bundle savedInstanceState) {
 
         final View view = inflater.inflate(R.layout.fragment_info_basica, container, false);
-
-        data.clear();
-        listaNotas = view.findViewById(R.id.lista_notas);
-        adapter = new ArrayAdapter<String>(getActivity(),
-                android.R.layout.simple_list_item_1, android.R.id.text1, data);
-        listaNotas.setAdapter(adapter);
 
         // GPS
         Button button = (Button) view.findViewById(R.id.GPS);
@@ -146,6 +156,12 @@ public class InfoBasicaFragment extends Fragment {
         });
 
         // Botón Audio
+        dataNotas.clear();
+        listaNotas = view.findViewById(R.id.lista_notas);
+        adapterNotas = new ArrayAdapter<String>(getActivity(),
+                android.R.layout.simple_list_item_1, android.R.id.text1, dataNotas);
+        listaNotas.setAdapter(adapterNotas);
+
         ActivityCompat.requestPermissions(getActivity(), permissions, REQUEST_RECORD_AUDIO_PERMISSION);
 
         final Button record = view.findViewById(R.id.audio);
@@ -165,12 +181,51 @@ public class InfoBasicaFragment extends Fragment {
             }
         });
 
+        // Fotos
+        dataFotos.clear();
+        listaFotos = view.findViewById(R.id.lista_fotos);
+        adapterFotos = new ArrayAdapter<String>(getActivity(),
+                android.R.layout.simple_list_item_1, android.R.id.text1, dataFotos);
+        listaFotos.setAdapter(adapterFotos);
+
+        Button foto = view.findViewById(R.id.camara);
+        foto.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                takePicture();
+            }
+        });
+
         return view;
     }
 
-    // Requesting permission to RECORD_AUDIO
-    private boolean permissionToRecordAccepted = false;
-    private String [] permissions = {Manifest.permission.RECORD_AUDIO};
+
+    public void takePicture() {
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        Uri file = Uri.fromFile(getOutputMediaFile());
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, file);
+
+        startActivityForResult(intent, 100);
+    }
+
+    private  File getOutputMediaFile(){
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        fotoName = "IMG_"+ timeStamp + ".jpg";
+        return new File(docData.get("pathFotos") + File.separator +
+                "IMG_"+ timeStamp + ".jpg");
+    }
+
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == 100) {
+            if (resultCode == RESULT_OK) {
+                dataFotos.add(fotoName);
+                adapterFotos.notifyDataSetChanged();
+                fotoName = "";
+            }
+        }
+    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -193,11 +248,11 @@ public class InfoBasicaFragment extends Fragment {
     }
 
     private void startRecording() {
-        fileName = docData.get("pathLocal") + "/" + UUID.randomUUID().toString() +".3gp";
+        notaName = docData.get("pathNotas") + "/" + UUID.randomUUID().toString() +".3gp";
         recorder = new MediaRecorder();
         recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-        recorder.setOutputFile(fileName);
+        recorder.setOutputFile(notaName);
         recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
 
         try {
@@ -210,15 +265,15 @@ public class InfoBasicaFragment extends Fragment {
     }
 
     private void stopRecording() {
-        int index = fileName.lastIndexOf("/");
-        String nota = fileName.substring(index + 1);
+        int index = notaName.lastIndexOf("/");
+        String nota = notaName.substring(index + 1);
 
         recorder.stop();
         recorder.release();
         recorder = null;
 
-        data.add(nota);
-        adapter.notifyDataSetChanged();
+        dataNotas.add(nota);
+        adapterNotas.notifyDataSetChanged();
     }
 
     public void onButtonPressed(Uri uri) {

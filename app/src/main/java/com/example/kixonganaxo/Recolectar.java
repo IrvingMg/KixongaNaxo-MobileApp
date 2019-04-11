@@ -63,7 +63,8 @@ public class Recolectar extends AppCompatActivity implements
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private Map<String, Object> docData = new HashMap<>();
     private String etiquetaId;
-    private File directory;
+    private File directoryNotas;
+    private File directoryFotos;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -108,21 +109,32 @@ public class Recolectar extends AppCompatActivity implements
         String fecha = sdf.format(new Date());
         docData.put("fecha_colecta", fecha);
 
+        ArrayList<String> fotos = new ArrayList<>();
+        docData.put("fotografias", fotos);
+
+        String lugar = getIntent().getExtras().getString("Lugar");
+        docData.put("lugar", lugar);
+
         ArrayList<String> audios = new ArrayList<>();
         docData.put("audios", audios);
 
-        ArrayList<String> fotos = new ArrayList<>();
-        docData.put("fotografias", fotos);
 
         DocumentReference etiquetaRef = db.collection("etiquetas").document();
         etiquetaId = etiquetaRef.getId();
 
-        directory = new File(Environment.getExternalStoragePublicDirectory(
+        directoryNotas = new File(Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_DOCUMENTS), "Notas/" + colectaId +"/" + etiquetaId);
-        if (!directory.mkdirs()) {
-            Log.e(TAG, "Directory not created");
+        if (!directoryNotas.mkdirs()) {
+            Log.e(TAG, "Directory Notas not created");
         }
-        docData.put("pathLocal", directory);
+        docData.put("pathNotas", directoryNotas);
+
+        directoryFotos = new File(Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_PICTURES), "Ejemplares/" + colectaId +"/" + etiquetaId);
+        if (!directoryFotos.mkdirs()) {
+            Log.e(TAG, "Directory Fotos not created");
+        }
+        docData.put("pathFotos", directoryFotos);
     }
 
     @Override
@@ -221,16 +233,33 @@ public class Recolectar extends AppCompatActivity implements
             TextInputLayout latx = findViewById(R.id.descripcion_latex);
             String latex = latx.getEditText().getText().toString();
 
+            // Fotos
+            ArrayList<String> fotos = new ArrayList<>();
+            Log.d(TAG, directoryFotos.toString());
+            for (File f : directoryFotos.listFiles()) {
+                if (f.isFile()) {
+                    String name = f.getName();
+                    Log.d(TAG, name);
+                    fotos.add(name);
+                }
+            }
+            docData.remove("pathFotos");
+
             // Notas de campo
             ArrayList<String> audios = new ArrayList<>();
-            for (File f : directory.listFiles()) {
+            for (File f : directoryNotas.listFiles()) {
                 if (f.isFile()) {
                     String name = f.getName();
                     audios.add(name);
                 }
             }
-            docData.remove("pathLocal");
+            docData.remove("pathNotas");
 
+            // Etiqueta
+            //docData.put("id_colecta", colectaId);
+            //docData.put("colector", colector);
+            //docData.put("fecha_colecta", fecha);
+            //docData.put("lugar", lugar);
             docData.put("nombre_comun", nombre);
             docData.put("ubicacion", ubicacion);
             docData.put("habito", habito);
@@ -240,6 +269,7 @@ public class Recolectar extends AppCompatActivity implements
             docData.put("descripcion_flores", flores);
             docData.put("descripcion_hojas", hojas);
             docData.put("descripcion_latex", latex);
+            docData.put("fotografias", fotos);
             docData.put("audios", audios);
 
             if ( nombre.isEmpty()) {

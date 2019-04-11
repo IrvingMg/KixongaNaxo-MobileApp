@@ -65,6 +65,7 @@ public class Colecta extends AppCompatActivity implements
     private SectionsPagerAdapter mSectionsPagerAdapter;
     private ViewPager mViewPager;
     private boolean participa = false;
+    private String lugar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,6 +96,7 @@ public class Colecta extends AppCompatActivity implements
                 if(participa == true) {
                     Intent i = new Intent(Colecta.this, Recolectar.class);
                     i.putExtra("DocID", docId);
+                    i.putExtra("Lugar", lugar);
                     startActivityForResult(i, 0);
                 }else {
                     Snackbar.make(view,
@@ -138,6 +140,8 @@ public class Colecta extends AppCompatActivity implements
                             DocumentSnapshot documentSnapshot = task.getResult();
                             if (documentSnapshot.exists()) {
                                 infoColecta = documentSnapshot.getData();
+
+                                lugar = infoColecta.get("lugar").toString();
 
                                 String titulo = infoColecta.get("titulo").toString();
                                 ActionBar actionBar = getSupportActionBar();
