@@ -22,28 +22,19 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.GeoPoint;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
 import java.util.Map;
 
-
-/**
- * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link MapaFragment.OnFragmentInteractionListener} interface
- * to handle interaction events.
- * Use the {@link MapaFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class MapaFragment extends SupportMapFragment implements OnMapReadyCallback,
         GoogleMap.OnMarkerClickListener {
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
+
     private static final String DOCID = "DocID";
     private final String TAG = "KixongaNaxo";
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
-
-    // TODO: Rename and change types of parameters
     private String docId;
     private GoogleMap mMap;
 
@@ -53,7 +44,6 @@ public class MapaFragment extends SupportMapFragment implements OnMapReadyCallba
         // Required empty public constructor
     }
 
-    // TODO: Rename and change types and number of parameters
     public static MapaFragment newInstance(String docId) {
         MapaFragment fragment = new MapaFragment();
         Bundle args = new Bundle();
@@ -93,8 +83,7 @@ public class MapaFragment extends SupportMapFragment implements OnMapReadyCallba
                                 double longitud = Double.parseDouble(infoColecta.get("longitud").toString());
 
                                 LatLng lugarColecta = new LatLng(latitud, longitud);
-                                //mMap.addMarker(new MarkerOptions().position(lugarColecta));
-                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lugarColecta, 15));
+                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lugarColecta, 16));
                             } else {
                                 Log.d(TAG, "No such document");
                             }
@@ -104,35 +93,31 @@ public class MapaFragment extends SupportMapFragment implements OnMapReadyCallba
                     }
                 });
 
-        //Marcar plantas recolectadas anteriormente
-        //Ejemplo...
-        LatLng PERTH = new LatLng(-31.952854, 115.857342);
-        LatLng SYDNEY = new LatLng(-33.87365, 151.20689);
-        LatLng BRISBANE = new LatLng(-27.47093, 153.0235);
-        Marker mPerth;
-        Marker mSydney;
-        Marker mBrisbane;
+        db.collection("etiquetas").get()
+                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                        if (task.isSuccessful()) {
+                            for (QueryDocumentSnapshot document : task.getResult()) {
+                                String nombre_comun = document.getData().get("nombre_comun").toString();
+                                String fecha_colecta = document.getData().get("fecha_colecta").toString();
+                                GeoPoint ubicacion = (GeoPoint) document.getData().get("ubicacion");
+                                LatLng coordenadas = new LatLng(ubicacion.getLatitude(), ubicacion.getLongitude());
 
-        // Add some markers to the map, and add a data object to each marker.
-        mPerth = mMap.addMarker(new MarkerOptions()
-                .position(PERTH)
-                .title("Perth")
-                .snippet("Population: 4,137,400"));
-        mPerth.setTag(0);
+                                Marker mEjemplar = mMap.addMarker(new MarkerOptions()
+                                        .position(coordenadas)
+                                        .title(nombre_comun)
+                                        .snippet("Fecha: " + fecha_colecta)
+                                        .snippet("Lat: " + ubicacion.getLatitude() + " Lng: " + ubicacion.getLongitude()));
+                                mEjemplar.setTag(0);
+                            }
+                        } else {
+                            Log.d(TAG, "Error getting documents: ", task.getException());
+                        }
+                    }
+                });
 
-        mSydney = mMap.addMarker(new MarkerOptions()
-                .position(SYDNEY)
-                .title("Sydney")
-                .snippet("Population: 4,137,400"));
-        mSydney.setTag(0);
 
-        mBrisbane = mMap.addMarker(new MarkerOptions()
-                .position(BRISBANE)
-                .title("Brisbane")
-                .snippet("Population: 4,137,400"));
-        mBrisbane.setTag(0);
-
-        // Set a listener for marker click.
         mMap.setOnMarkerClickListener(this);
     }
 

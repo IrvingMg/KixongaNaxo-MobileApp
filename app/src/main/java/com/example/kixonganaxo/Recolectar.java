@@ -195,8 +195,8 @@ public class Recolectar extends AppCompatActivity implements
             Double latitud = Double.parseDouble(sLat);
 
             //Longitud
-            TextInputLayout lng = findViewById(R.id.latitud);
-            String sLng = lat.getEditText().getText().toString();
+            TextInputLayout lng = findViewById(R.id.longitud);
+            String sLng = lng.getEditText().getText().toString();
             if (sLng.isEmpty()) {
                 sLng = "0.0";
             }
@@ -244,28 +244,6 @@ public class Recolectar extends AppCompatActivity implements
             TextInputLayout latx = findViewById(R.id.descripcion_latex);
             String latex = latx.getEditText().getText().toString();
 
-            /*
-            // Fotos
-            ArrayList<String> fotos = new ArrayList<>();
-            for (File f : directoryFotos.listFiles()) {
-                if (f.isFile()) {
-                    String name = f.getName();
-                    fotos.add(name);
-                }
-            }
-            docData.remove("pathFotos");
-
-            // Notas de campo
-            ArrayList<String> audios = new ArrayList<>();
-            for (File f : directoryNotas.listFiles()) {
-                if (f.isFile()) {
-                    String name = f.getName();
-                    audios.add(name);
-                }
-            }
-            docData.remove("pathNotas");
-            */
-
             docData.remove("pathFotos");
             docData.remove("pathNotas");
             // Etiqueta
@@ -278,8 +256,6 @@ public class Recolectar extends AppCompatActivity implements
             docData.put("descripcion_flores", flores);
             docData.put("descripcion_hojas", hojas);
             docData.put("descripcion_latex", latex);
-            //docData.put("fotografias", fotos);
-            //docData.put("audios", audios);
 
             if ( nombre.isEmpty()) {
                 Toast.makeText(Recolectar.this,

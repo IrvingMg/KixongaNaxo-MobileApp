@@ -363,17 +363,18 @@ public class Colecta extends AppCompatActivity implements
             // getItem is called to instantiate the fragment for the given page.
             switch (position) {
                 case 0:
-                    PlaneacionFragment planeacionFragment = new PlaneacionFragment();
-                    planeacionFragment.setArguments(getIntent().getExtras());
-                    return planeacionFragment;
+                    RecoleccionFragment recoleccionFragment = new RecoleccionFragment();
+                    recoleccionFragment.setArguments(getIntent().getExtras());
+                    return recoleccionFragment;
+
                 case 1:
                     MapaFragment mapaFragment = new MapaFragment();
                     mapaFragment.setArguments(getIntent().getExtras());
                     return mapaFragment;
                 case 2:
-                    RecoleccionFragment recoleccionFragment = new RecoleccionFragment();
-                    recoleccionFragment.setArguments(getIntent().getExtras());
-                    return recoleccionFragment;
+                    PlaneacionFragment planeacionFragment = new PlaneacionFragment();
+                    planeacionFragment.setArguments(getIntent().getExtras());
+                    return planeacionFragment;
                 default:
                     return null;
             }
