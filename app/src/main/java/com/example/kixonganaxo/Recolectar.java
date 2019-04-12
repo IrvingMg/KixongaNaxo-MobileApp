@@ -123,14 +123,14 @@ public class Recolectar extends AppCompatActivity implements
         etiquetaId = etiquetaRef.getId();
 
         directoryNotas = new File(Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_DOCUMENTS), "Notas/" + colectaId +"/" + etiquetaId);
+                Environment.DIRECTORY_DOCUMENTS), "KixongaNaxo/Notas/" + colectaId +"/" + etiquetaId);
         if (!directoryNotas.mkdirs()) {
             Log.e(TAG, "Directory Notas not created");
         }
         docData.put("pathNotas", directoryNotas);
 
         directoryFotos = new File(Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_PICTURES), "Ejemplares/" + colectaId +"/" + etiquetaId);
+                Environment.DIRECTORY_DOCUMENTS), "KixongaNaxo/Ejemplares/" + colectaId +"/" + etiquetaId);
         if (!directoryFotos.mkdirs()) {
             Log.e(TAG, "Directory Fotos not created");
         }
@@ -143,6 +143,8 @@ public class Recolectar extends AppCompatActivity implements
         builder.setMessage("¿Desea salir sin guardar la información?")
                 .setPositiveButton("ACEPTAR", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
+                        borrarDirectorio(docData.get("pathFotos").toString());
+                        borrarDirectorio(docData.get("pathNotas").toString());
                         finish();
                     }
                 })
@@ -155,6 +157,19 @@ public class Recolectar extends AppCompatActivity implements
         builder.create().show();
     }
 
+    private void borrarDirectorio(String path) {
+        File dir = new File(path);
+        if (dir.isDirectory())
+        {
+            String[] children = dir.list();
+            for (int i = 0; i < children.length; i++)
+            {
+                new File(dir, children[i]).delete();
+            }
+        }
+        dir.delete();
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -164,12 +179,8 @@ public class Recolectar extends AppCompatActivity implements
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.guardar) {
             //Nombre común
             TextInputLayout nombreComun = findViewById(R.id.nombre_comun);
@@ -233,13 +244,12 @@ public class Recolectar extends AppCompatActivity implements
             TextInputLayout latx = findViewById(R.id.descripcion_latex);
             String latex = latx.getEditText().getText().toString();
 
+            /*
             // Fotos
             ArrayList<String> fotos = new ArrayList<>();
-            Log.d(TAG, directoryFotos.toString());
             for (File f : directoryFotos.listFiles()) {
                 if (f.isFile()) {
                     String name = f.getName();
-                    Log.d(TAG, name);
                     fotos.add(name);
                 }
             }
@@ -254,12 +264,11 @@ public class Recolectar extends AppCompatActivity implements
                 }
             }
             docData.remove("pathNotas");
+            */
 
+            docData.remove("pathFotos");
+            docData.remove("pathNotas");
             // Etiqueta
-            //docData.put("id_colecta", colectaId);
-            //docData.put("colector", colector);
-            //docData.put("fecha_colecta", fecha);
-            //docData.put("lugar", lugar);
             docData.put("nombre_comun", nombre);
             docData.put("ubicacion", ubicacion);
             docData.put("habito", habito);
@@ -269,8 +278,8 @@ public class Recolectar extends AppCompatActivity implements
             docData.put("descripcion_flores", flores);
             docData.put("descripcion_hojas", hojas);
             docData.put("descripcion_latex", latex);
-            docData.put("fotografias", fotos);
-            docData.put("audios", audios);
+            //docData.put("fotografias", fotos);
+            //docData.put("audios", audios);
 
             if ( nombre.isEmpty()) {
                 Toast.makeText(Recolectar.this,
@@ -290,7 +299,6 @@ public class Recolectar extends AppCompatActivity implements
 
     @Override
     public void onFragmentInteraction(Uri uri) {
-
     }
 
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
@@ -318,7 +326,6 @@ public class Recolectar extends AppCompatActivity implements
 
         @Override
         public int getCount() {
-            // Show 2 total pages.
             return 2;
         }
     }

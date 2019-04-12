@@ -5,6 +5,7 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Environment;
 import android.provider.Telephony;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -42,13 +43,19 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.SetOptions;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import io.opencensus.internal.StringUtil;
 
 public class Colecta extends AppCompatActivity implements
     PlaneacionFragment.OnFragmentInteractionListener,
@@ -57,6 +64,7 @@ public class Colecta extends AppCompatActivity implements
 
     private final String TAG = "KixongaNaxo";
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private final FirebaseStorage storage = FirebaseStorage.getInstance();
     private String docId;
     private Map<String, Object> infoColecta;
     private FirebaseAuth mAuth;
@@ -66,6 +74,10 @@ public class Colecta extends AppCompatActivity implements
     private ViewPager mViewPager;
     private boolean participa = false;
     private String lugar;
+    private ArrayList<String> audios;
+    private ArrayList<String> fotos;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -230,13 +242,110 @@ public class Colecta extends AppCompatActivity implements
         }
 
         if (id == R.id.subir_etiquetas) {
-            Log.d(TAG, "Subir etiquetas...");
+            File directorioFotos = new File(Environment.getExternalStoragePublicDirectory(
+                    Environment.DIRECTORY_DOCUMENTS), "KixongaNaxo/Ejemplares/" + docId);
+            File directorioNotas = new File(Environment.getExternalStoragePublicDirectory(
+                    Environment.DIRECTORY_DOCUMENTS), "KixongaNaxo/Notas/" + docId);
+
+            subirArchivos(directorioFotos);
+            subirArchivos(directorioNotas);
             return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
 
+    private void subirArchivos(File directorio) {
+        String tipoArchivo;
+        String nombreArchivo;
+        String directorioStorage;
+        String etiquetaId;
+        boolean subirFotos = false;
+
+        String[] etiquetas = directorio.list();
+        for (int i = 0; i < etiquetas.length; i++)
+        {
+            File dir = new File(directorio, etiquetas[i]);
+            audios = new ArrayList<>();
+            fotos = new ArrayList<>();
+
+            String[] archivos = dir.list();
+            for (int j = 0; j < archivos.length; j++) {
+                String pathArchivo = new File(dir, archivos[j]).toString();
+                Uri uriArchivo = Uri.fromFile(new File(pathArchivo));
+
+                // Obtiene nombre del archivo
+                int index = pathArchivo.lastIndexOf("/");
+                nombreArchivo = pathArchivo.substring(index + 1);
+
+                // Obtiene extension del archivo
+                index = pathArchivo.lastIndexOf(".");
+                tipoArchivo = pathArchivo.substring(index);
+
+                if (tipoArchivo.equals(".jpg") == true) {
+                    directorioStorage = "fotos";
+                    fotos.add(nombreArchivo);
+                    subirFotos = true;
+                } else {
+                    directorioStorage = "audios";
+                    audios.add(nombreArchivo);
+                }
+                subirCloudStorage(uriArchivo, directorioStorage);
+            }
+
+            etiquetaId = etiquetas[i];
+            subirFirestore(etiquetaId, subirFotos);
+        }
+    }
+
+    private void subirFirestore(String etiquetaId, boolean subirFotos) {
+        Map<String, Object> etiqueta = new HashMap<>();
+
+        if (subirFotos == true) {
+            etiqueta.put("fotografias", fotos);
+        } else {
+            etiqueta.put("audios", audios);
+        }
+
+        db.collection("etiquetas").document(etiquetaId)
+                .set(etiqueta, SetOptions.merge());
+    }
+
+    private int indexOcurrencia(String texto, String subtexto, int ocurrencia) {
+        int index = texto.length();
+
+        while (ocurrencia != 0) {
+            index = texto.lastIndexOf(subtexto, index - 1);
+            if (index == -1) {
+                return index;
+            }
+            ocurrencia--;
+        }
+        return index;
+    }
+
+    private void subirCloudStorage(Uri file, String directorioStorage) {
+        StorageReference storageRef = storage.getReference();
+        int index = indexOcurrencia(file.toString(), "/", 2);
+        StorageReference fileRef = storageRef.child(directorioStorage + file.toString().substring(index));
+        UploadTask uploadTask = fileRef.putFile(file);
+
+        final ProgressDialog alerta = ProgressDialog.show(Colecta.this, "",
+                "Subiendo archivos. Esta operación podría tomar unos minutos.", true);
+
+        uploadTask.addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                Toast.makeText(Colecta.this, "Error. Por favor, intente de nuevo.",
+                        Toast.LENGTH_LONG).show();
+            }
+        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                alerta.dismiss();
+            }
+        });
+    }
 
     @Override
     public void onFragmentInteraction(Uri uri) {

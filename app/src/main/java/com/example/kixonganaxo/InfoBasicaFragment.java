@@ -248,12 +248,12 @@ public class InfoBasicaFragment extends Fragment {
     }
 
     private void startRecording() {
-        notaName = docData.get("pathNotas") + "/" + UUID.randomUUID().toString() +".3gp";
+        notaName = docData.get("pathNotas") + "/" + UUID.randomUUID().toString() +".aac";
         recorder = new MediaRecorder();
         recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-        recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+        recorder.setOutputFormat(MediaRecorder.OutputFormat.AAC_ADTS);
         recorder.setOutputFile(notaName);
-        recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+        recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
 
         try {
             recorder.prepare();
