@@ -29,6 +29,7 @@ import android.view.ViewGroup;
 
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -36,9 +37,15 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.GeoPoint;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.SetOptions;
 
 import java.io.File;
@@ -51,40 +58,37 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.annotation.Nullable;
+
 public class Recolectar extends AppCompatActivity implements
     InfoBasicaFragment.OnFragmentInteractionListener,
     EtiquetaFragment.OnFragmentInteractionListener {
 
-    private SectionsPagerAdapter mSectionsPagerAdapter;
     private final String TAG = "KixongaNaxo";
-    private ViewPager mViewPager;
-    private String colectaId;
-    private FirebaseUser user;
+    private final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
-    private Map<String, Object> docData = new HashMap<>();
+    private String colectaId;
     private String etiquetaId;
-    private File directoryNotas;
-    private File directoryFotos;
+    private Map<String, Object> docEtiqueta;
+    private boolean nuevaEtiqueta;
+    private String directorioNotas;
+    private String directorioFotos;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_recolectar);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        // Create the adapter that will return a fragment for each of the three
-        // primary sections of the activity.
-        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
-
-        // Set up the ViewPager with the sections adapter.
-        mViewPager = (ViewPager) findViewById(R.id.container);
+        SectionsPagerAdapter mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+        ViewPager mViewPager = findViewById(R.id.container);
         mViewPager.setAdapter(mSectionsPagerAdapter);
 
-        TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
+        TabLayout tabLayout = findViewById(R.id.tabs);
 
         mViewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
         tabLayout.addOnTabSelectedListener(new TabLayout.ViewPagerOnTabSelectedListener(mViewPager));
@@ -96,45 +100,77 @@ public class Recolectar extends AppCompatActivity implements
             }
         });
 
-        colectaId = getIntent().getExtras().getString("DocID");
-        docData.put("id_colecta", colectaId);
+        colectaId = getIntent().getExtras().getString("ColectaID");
+        etiquetaId = getIntent().getExtras().getString("EtiquetaID");
+        if (etiquetaId != null) {
+            initEtiqueta();
+        } else {
+            initNuevaEtiqueta();
+        }
+        getDirectorios();
+    }
 
-        user = FirebaseAuth.getInstance().getCurrentUser();
-        Map<String, String> colector = new HashMap<>();
-        colector.put("id_usuario", user.getUid());
-        colector.put("nombre_usuario", user.getDisplayName());
-        docData.put("colector", colector);
+    private void getDirectorios() {
+        File directoryNotas = new File(Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_DOCUMENTS), "KixongaNaxo/Notas/" + colectaId + "/" + etiquetaId);
+        directoryNotas.mkdirs();
+        directorioNotas = directoryNotas.toString();
 
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        String fecha = sdf.format(new Date());
-        docData.put("fecha_colecta", fecha);
+        File directoryFotos = new File(Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_DOCUMENTS), "KixongaNaxo/Ejemplares/" + colectaId + "/" + etiquetaId);
+        directoryFotos.mkdirs();
+        directorioFotos = directoryFotos.toString();
+    }
 
-        ArrayList<String> fotos = new ArrayList<>();
-        docData.put("fotografias", fotos);
+    private void initEtiqueta() {
+        nuevaEtiqueta = false;
 
-        String lugar = getIntent().getExtras().getString("Lugar");
-        docData.put("lugar", lugar);
+        db.collection("etiquetas")
+                .document(etiquetaId)
+                .addSnapshotListener(new EventListener<DocumentSnapshot>() {
+                    @Override
+                    public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
+                        if (e != null) {
+                            Log.w(TAG, "Listen error", e);
+                            return;
+                        }
 
-        ArrayList<String> audios = new ArrayList<>();
-        docData.put("audios", audios);
+                        // Read the data
+                        if (documentSnapshot != null && documentSnapshot.exists()) {
+                            docEtiqueta = documentSnapshot.getData();
+                        } else {
+                            Log.d(TAG, "Data: null");
+                        }
+                    }
+                });
+    }
 
+    private void initNuevaEtiqueta() {
+        nuevaEtiqueta = true;
+        docEtiqueta = new HashMap<>();
 
         DocumentReference etiquetaRef = db.collection("etiquetas").document();
         etiquetaId = etiquetaRef.getId();
 
-        directoryNotas = new File(Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_DOCUMENTS), "KixongaNaxo/Notas/" + colectaId +"/" + etiquetaId);
-        if (!directoryNotas.mkdirs()) {
-            Log.e(TAG, "Directory Notas not created");
-        }
-        docData.put("pathNotas", directoryNotas);
+        docEtiqueta.put("id_colecta", colectaId);
 
-        directoryFotos = new File(Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_DOCUMENTS), "KixongaNaxo/Ejemplares/" + colectaId +"/" + etiquetaId);
-        if (!directoryFotos.mkdirs()) {
-            Log.e(TAG, "Directory Fotos not created");
-        }
-        docData.put("pathFotos", directoryFotos);
+        Map<String, String> colector = new HashMap<>();
+        colector.put("id_usuario", user.getUid());
+        colector.put("nombre_usuario", user.getDisplayName());
+        docEtiqueta.put("colector", colector);
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        String fecha = sdf.format(new Date());
+        docEtiqueta.put("fecha_colecta", fecha);
+
+        ArrayList<String> fotos = new ArrayList<>();
+        docEtiqueta.put("fotografias", fotos);
+
+        String lugar = getIntent().getExtras().getString("Lugar");
+        docEtiqueta.put("lugar", lugar);
+
+        ArrayList<String> audios = new ArrayList<>();
+        docEtiqueta.put("audios", audios);
     }
 
     @Override
@@ -143,14 +179,15 @@ public class Recolectar extends AppCompatActivity implements
         builder.setMessage("¿Desea salir sin guardar la información?")
                 .setPositiveButton("ACEPTAR", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        borrarDirectorio(docData.get("pathFotos").toString());
-                        borrarDirectorio(docData.get("pathNotas").toString());
+                        if (nuevaEtiqueta == true) {
+                            borrarDirectorio(directorioFotos);
+                            borrarDirectorio(directorioNotas);
+                        }
                         finish();
                     }
                 })
                 .setNegativeButton("CANCELAR", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        // User cancelled the dialog
                     }
                 });
 
@@ -172,7 +209,6 @@ public class Recolectar extends AppCompatActivity implements
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_recolectar, menu);
         return true;
     }
@@ -185,6 +221,13 @@ public class Recolectar extends AppCompatActivity implements
             //Nombre común
             TextInputLayout nombreComun = findViewById(R.id.nombre_comun);
             String nombre = nombreComun.getEditText().getText().toString();
+            if ( nombre.isEmpty()) {
+                Toast.makeText(Recolectar.this,
+                        "Ingrese el nombre del ejemplar.",
+                        Toast.LENGTH_SHORT).show();
+
+                return false;
+            }
 
             //Latitud
             TextInputLayout lat = findViewById(R.id.latitud);
@@ -244,31 +287,25 @@ public class Recolectar extends AppCompatActivity implements
             TextInputLayout latx = findViewById(R.id.descripcion_latex);
             String latex = latx.getEditText().getText().toString();
 
-            docData.remove("pathFotos");
-            docData.remove("pathNotas");
             // Etiqueta
-            docData.put("nombre_comun", nombre);
-            docData.put("ubicacion", ubicacion);
-            docData.put("habito", habito);
-            docData.put("dap", dap);
-            docData.put("abundancia", abundancia);
-            docData.put("caracteristicas_lugar", lugar);
-            docData.put("descripcion_flores", flores);
-            docData.put("descripcion_hojas", hojas);
-            docData.put("descripcion_latex", latex);
+            docEtiqueta.put("nombre_comun", nombre);
+            docEtiqueta.put("ubicacion", ubicacion);
+            docEtiqueta.put("habito", habito);
+            docEtiqueta.put("dap", dap);
+            docEtiqueta.put("abundancia", abundancia);
+            docEtiqueta.put("caracteristicas_lugar", lugar);
+            docEtiqueta.put("descripcion_flores", flores);
+            docEtiqueta.put("descripcion_hojas", hojas);
+            docEtiqueta.put("descripcion_latex", latex);
 
-            if ( nombre.isEmpty()) {
-                Toast.makeText(Recolectar.this,
-                        "Ingrese el nombre del ejemplar.",
-                        Toast.LENGTH_SHORT).show();
-            }else {
-                db.collection("etiquetas")
-                        .document(etiquetaId)
-                        .set(docData);
-                Intent intent = new Intent();
-                setResult(Activity.RESULT_OK, intent);
-                finish();
-            }
+            db.collection("etiquetas")
+                    .document(etiquetaId)
+                    .set(docEtiqueta, SetOptions.merge());
+
+            Intent intent = new Intent();
+            setResult(Activity.RESULT_OK, intent);
+            finish();
+
         }
         return super.onOptionsItemSelected(item);
     }
@@ -289,7 +326,10 @@ public class Recolectar extends AppCompatActivity implements
                 case 0:
                     InfoBasicaFragment infoBasicaFragment = new InfoBasicaFragment();
                     Bundle bundle = new Bundle();
-                    bundle.putSerializable("DocDatos", (Serializable) docData);
+                    bundle.putSerializable("DatosEtiqueta", (Serializable) docEtiqueta);
+                    bundle.putSerializable("NuevaEtiqueta", nuevaEtiqueta);
+                    bundle.putString("PathFotos", directorioFotos);
+                    bundle.putString("PathNotas", directorioNotas);
                     infoBasicaFragment.setArguments(bundle);
                     return  infoBasicaFragment;
                 case 1:

@@ -107,7 +107,7 @@ public class Colecta extends AppCompatActivity implements
 
                 if(participa == true) {
                     Intent i = new Intent(Colecta.this, Recolectar.class);
-                    i.putExtra("DocID", docId);
+                    i.putExtra("ColectaID", docId);
                     i.putExtra("Lugar", lugar);
                     startActivityForResult(i, 0);
                 }else {

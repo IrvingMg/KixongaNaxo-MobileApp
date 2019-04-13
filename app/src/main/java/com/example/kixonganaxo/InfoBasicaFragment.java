@@ -53,40 +53,41 @@ import static android.support.v4.content.ContextCompat.getDataDir;
 import static android.support.v4.content.ContextCompat.getSystemService;
 
 public class InfoBasicaFragment extends Fragment {
-    private static final String DATOS = "DocDatos";
-    private final String TAG = "KixongaNaxo";
-    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
-    private Location mlocation;
-    private Map<String, Object> docData;
-    private OnFragmentInteractionListener mListener;
-    private Button recordButton = null;
-    private MediaRecorder recorder = null;
-    private String notaName = null;
+    private static final String DATOS = "DatosEtiqueta";
+    private static final String NUEVA_ETIQUETA = "NuevaEtiqueta";
+    private static final String PATH_FOTOS = "PathFotos";
+    private static final String PATH_NOTAS = "PathNotas";
     private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
+    private final String TAG = "KixongaNaxo";
+    private OnFragmentInteractionListener mListener;
+    private MediaRecorder recorder = null;
     private boolean mStartRecording = true;
-    private List<String> pathNotas;
-    private List<String> dataNotas = new ArrayList<>();
-    private ListView listaNotas;
-    private ArrayAdapter<String> adapterNotas;
-    // Requesting permission to RECORD_AUDIO
     private boolean permissionToRecordAccepted = false;
     private String [] permissions = {Manifest.permission.RECORD_AUDIO};
+    private Map<String, Object> docEtiqueta;
     private String fotoName = null;
     private List<String> dataFotos = new ArrayList<>();
-    private ListView listaFotos;
     private ArrayAdapter<String> adapterFotos;
-
-
+    private String notaName = null;
+    private List<String> dataNotas = new ArrayList<>();
+    private ArrayAdapter<String> adapterNotas;
+    private boolean nuevaEtiqueta;
+    private String directorioNotas;
+    private String directorioFotos;
 
 
     public InfoBasicaFragment() {
         // Required empty public constructor
     }
 
-    public static InfoBasicaFragment newInstance(Map<String, Object> docData) {
+    public static InfoBasicaFragment newInstance(Map<String, Object> documento, Boolean bandera,
+                                                 String fotos, String notas) {
         InfoBasicaFragment fragment = new InfoBasicaFragment();
         Bundle args = new Bundle();
-        args.putSerializable(DATOS, (Serializable) docData);
+        args.putSerializable(DATOS, (Serializable) documento);
+        args.putBoolean(NUEVA_ETIQUETA, bandera);
+        args.putString(PATH_FOTOS, fotos);
+        args.putString(PATH_NOTAS, notas);
         fragment.setArguments(args);
         return fragment;
     }
@@ -95,7 +96,10 @@ public class InfoBasicaFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            docData = (Map<String, Object>) getArguments().getSerializable(DATOS);
+            docEtiqueta = (Map<String, Object>) getArguments().getSerializable(DATOS);
+            nuevaEtiqueta = getArguments().getBoolean(NUEVA_ETIQUETA);
+            directorioFotos = getArguments().getString(PATH_FOTOS);
+            directorioNotas = getArguments().getString(PATH_NOTAS);
         }
     }
 
@@ -103,16 +107,23 @@ public class InfoBasicaFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        final View view = inflater.inflate(R.layout.fragment_info_basica, container, false);
+        View view = inflater.inflate(R.layout.fragment_info_basica, container, false);
+        cargarGPS(view);
+        cargarGrabadora(view);
+        cargarCamara(view);
 
-        // GPS
-        Button button = (Button) view.findViewById(R.id.GPS);
-        final TextInputLayout latitud = view.findViewById(R.id.latitud);
-        final TextInputLayout longitud = view.findViewById(R.id.longitud);
+        return view;
+    }
+
+    private void cargarGPS(final View v) {
+        Button button = v.findViewById(R.id.GPS);
+
         final LocationListener locationListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
-                mlocation = location;
+                TextInputLayout latitud = v.findViewById(R.id.latitud);
+                TextInputLayout longitud = v.findViewById(R.id.longitud);
+                Location mlocation = location;
                 latitud.getEditText().setText(String.valueOf(location.getLatitude()));
                 longitud.getEditText().setText(String.valueOf(location.getLongitude()));
             }
@@ -140,9 +151,7 @@ public class InfoBasicaFragment extends Fragment {
         criteria.setHorizontalAccuracy(Criteria.ACCURACY_HIGH);
         criteria.setVerticalAccuracy(Criteria.ACCURACY_HIGH);
 
-        final LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
         final Looper looper = null;
-
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -151,54 +160,59 @@ public class InfoBasicaFragment extends Fragment {
                         Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                     return;
                 }
+
+                LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
                 locationManager.requestSingleUpdate(criteria, locationListener, looper);
             }
         });
+    }
 
-        // Botón Audio
-        dataNotas.clear();
-        listaNotas = view.findViewById(R.id.lista_notas);
-        adapterNotas = new ArrayAdapter<String>(getActivity(),
+    private void cargarGrabadora(View v) {
+        // Inicializar lista de audios
+        if (nuevaEtiqueta == true) {
+            dataNotas.clear();
+        } else {
+            Log.d(TAG, "Cargar Audios: " + directorioNotas);
+        }
+        ListView listaNotas = v.findViewById(R.id.lista_notas);
+        adapterNotas = new ArrayAdapter<>(getActivity(),
                 android.R.layout.simple_list_item_1, android.R.id.text1, dataNotas);
         listaNotas.setAdapter(adapterNotas);
 
         ActivityCompat.requestPermissions(getActivity(), permissions, REQUEST_RECORD_AUDIO_PERMISSION);
-
-        final Button record = view.findViewById(R.id.audio);
+        final Button record = v.findViewById(R.id.audio);
         record.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 onRecord(mStartRecording);
                 if (mStartRecording) {
                     record.setText("Detener");
-                    view.setTag(0);
+                    v.setTag(0);
                 } else {
                     record.setText("Grabar Nota");
-                    view.setTag(1);
+                    v.setTag(1);
                 }
                 mStartRecording = !mStartRecording;
-
             }
         });
+    }
 
+    private void cargarCamara(View v) {
         // Fotos
         dataFotos.clear();
-        listaFotos = view.findViewById(R.id.lista_fotos);
+        ListView listaFotos = v.findViewById(R.id.lista_fotos);
         adapterFotos = new ArrayAdapter<String>(getActivity(),
                 android.R.layout.simple_list_item_1, android.R.id.text1, dataFotos);
         listaFotos.setAdapter(adapterFotos);
 
-        Button foto = view.findViewById(R.id.camara);
+        Button foto = v.findViewById(R.id.camara);
         foto.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 takePicture();
             }
         });
-
-        return view;
     }
-
 
     public void takePicture() {
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -211,7 +225,7 @@ public class InfoBasicaFragment extends Fragment {
     private  File getOutputMediaFile(){
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         fotoName = "IMG_"+ timeStamp + ".jpg";
-        return new File(docData.get("pathFotos") + File.separator +
+        return new File(directorioFotos + File.separator +
                 "IMG_"+ timeStamp + ".jpg");
     }
 
@@ -248,7 +262,7 @@ public class InfoBasicaFragment extends Fragment {
     }
 
     private void startRecording() {
-        notaName = docData.get("pathNotas") + "/" + UUID.randomUUID().toString() +".aac";
+        notaName = directorioNotas + File.separator + UUID.randomUUID().toString() +".aac";
         recorder = new MediaRecorder();
         recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         recorder.setOutputFormat(MediaRecorder.OutputFormat.AAC_ADTS);
@@ -276,12 +290,6 @@ public class InfoBasicaFragment extends Fragment {
         adapterNotas.notifyDataSetChanged();
     }
 
-    public void onButtonPressed(Uri uri) {
-        if (mListener != null) {
-            mListener.onFragmentInteraction(uri);
-        }
-    }
-
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
@@ -293,7 +301,6 @@ public class InfoBasicaFragment extends Fragment {
         }
     }
 
-
     @Override
     public void onDetach() {
         super.onDetach();
@@ -301,6 +308,5 @@ public class InfoBasicaFragment extends Fragment {
     }
 
     public interface OnFragmentInteractionListener {
-        void onFragmentInteraction(Uri uri);
     }
 }
