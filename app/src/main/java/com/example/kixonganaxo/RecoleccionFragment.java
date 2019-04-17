@@ -40,24 +40,24 @@ import java.util.List;
 import java.util.Map;
 
 public class RecoleccionFragment extends Fragment {
-    private static final String DOCID = "DocID";
+    private static final String COLECTA_ID = "DocID";
     private final String TAG = "KixongaNaxo";
+    private final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
-    private FirebaseAuth mAuth;
-    private FirebaseUser user;
-    private String docId;
-    private List<Map<String, String>> data = new ArrayList<Map<String, String>>();
-    private List<String> etiquetaIDs = new ArrayList<>();
     private OnFragmentInteractionListener mListener;
+    private String colectaId;
+    private ListAdapter adapter;
+    private List<Map<String, String>> data = new ArrayList<>();
+    private List<String> listaIdEtiquetas = new ArrayList<>();
 
     public RecoleccionFragment() {
         // Required empty public constructor
     }
 
-    public static RecoleccionFragment newInstance(String docId) {
+    public static RecoleccionFragment newInstance(String id) {
         RecoleccionFragment fragment = new RecoleccionFragment();
         Bundle args = new Bundle();
-        args.putString(DOCID, docId);
+        args.putString(COLECTA_ID, id);
         fragment.setArguments(args);
         return fragment;
     }
@@ -66,30 +66,26 @@ public class RecoleccionFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            docId = getArguments().getString(DOCID);
+            colectaId = getArguments().getString(COLECTA_ID);
         }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        final View v = inflater.inflate(R.layout.fragment_recoleccion, container, false);
-        final TextView textView = v.findViewById(R.id.mensajeVacio);
-        mAuth = FirebaseAuth.getInstance();
-        user = mAuth.getCurrentUser();
+        View v = inflater.inflate(R.layout.fragment_recoleccion, container, false);
+        initListaEtiquetas(v);
+        return v;
+    }
 
-        Map<String, String> infoUsuario = new HashMap<>();
-        infoUsuario.put("id_usuario", user.getUid());
-        infoUsuario.put("nombre_usuario", user.getDisplayName());
-
+    private void initListaEtiquetas(View v) {
         data.clear();
         ListView listView = v.findViewById(R.id.ejemplares_recolectados);
-        final ListAdapter adapter = new SimpleAdapter(
+        adapter = new SimpleAdapter(
                 getActivity(),
                 data,
                 android.R.layout.simple_list_item_2,
-                new String[] {"Text1","Text2"}, // Array of cursor columns to bind to.
+                new String[] {"Text1","Text2"},
                 new int[] {android.R.id.text1, android.R.id.text2});
         listView.setAdapter(adapter);
 
@@ -97,15 +93,20 @@ public class RecoleccionFragment extends Fragment {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                String etiquetaID = etiquetaIDs.get(position);
+                String etiquetaId = listaIdEtiquetas.get(position);
                 Intent i = new Intent(getActivity(), Recolectar.class);
-                i.putExtra("ColectaID", docId);
-                i.putExtra("EtiquetaID", etiquetaID);
+                i.putExtra("ColectaID", colectaId);
+                i.putExtra("EtiquetaID", etiquetaId);
                 startActivity(i);
             }
         });
+
+        Map<String, String> infoUsuario = new HashMap<>();
+        infoUsuario.put("id_usuario", user.getUid());
+        infoUsuario.put("nombre_usuario", user.getDisplayName());
+
         db.collection("etiquetas")
-                .whereEqualTo("id_colecta", docId)
+                .whereEqualTo("id_colecta", colectaId)
                 .whereEqualTo("colector", infoUsuario)
                 .orderBy("nombre_comun", Query.Direction.ASCENDING)
                 .addSnapshotListener(new EventListener<QuerySnapshot>() {
@@ -117,24 +118,25 @@ public class RecoleccionFragment extends Fragment {
                             return;
                         }
 
-                        for (DocumentChange change : querySnapshot.getDocumentChanges()) {
-                            if (change.getType() == DocumentChange.Type.ADDED) {
-                                etiquetaIDs.add(change.getDocument().getId());
+                        listaIdEtiquetas.clear();
+                        data.clear();
 
-                                Map<String, String> datum = new HashMap<String, String>(2);
-                                datum.put("Text1", change.getDocument().get("nombre_comun").toString());
-                                GeoPoint geoPoint = (GeoPoint) change.getDocument().get("ubicacion");
-                                Double latitud = geoPoint.getLatitude();
-                                Double longitud = geoPoint.getLongitude();
-                                datum.put("Text2", "Latitud: " + latitud + " Longitud: " + longitud);
-                                data.add(datum);
-                            }
+                        for (DocumentSnapshot documentSnapshot : querySnapshot.getDocuments()) {
+                            listaIdEtiquetas.add(documentSnapshot.getId());
+
+                            Map<String, String> datum = new HashMap<>(2);
+                            datum.put("Text1", documentSnapshot.getData().get("nombre_comun").toString());
+                            GeoPoint geoPoint = (GeoPoint) documentSnapshot.getData().get("ubicacion");
+                            Double latitud = geoPoint.getLatitude();
+                            Double longitud = geoPoint.getLongitude();
+                            datum.put("Text2", "Latitud: " + latitud + " Longitud: " + longitud);
+                            data.add(datum);
                         }
+
                         ((SimpleAdapter) adapter).notifyDataSetChanged();
                     }
                 });
 
-        return v;
     }
 
     @Override
@@ -148,15 +150,15 @@ public class RecoleccionFragment extends Fragment {
 
     @Override
     public boolean onContextItemSelected(MenuItem item) {
-        Log.d(TAG, "Eliminar: " + item.getItemId());
-        return true;
-    }
+        int itemId = item.getItemId();
+        String etiquetaId = listaIdEtiquetas.get(itemId);
 
-    // TODO: Rename method, update argument and hook method into UI event
-    public void onButtonPressed(Uri uri) {
-        if (mListener != null) {
-            mListener.onFragmentInteraction(uri);
-        }
+        db.collection("etiquetas").document(etiquetaId).delete();
+        listaIdEtiquetas.remove(itemId);
+        data.remove(itemId);
+        ((SimpleAdapter) adapter).notifyDataSetChanged();
+
+        return true;
     }
 
     @Override
@@ -177,7 +179,5 @@ public class RecoleccionFragment extends Fragment {
     }
 
     public interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
-        void onFragmentInteraction(Uri uri);
     }
 }

@@ -63,12 +63,11 @@ public class Colecta extends AppCompatActivity implements
     RecoleccionFragment.OnFragmentInteractionListener {
 
     private final String TAG = "KixongaNaxo";
+    private final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private final FirebaseStorage storage = FirebaseStorage.getInstance();
     private String docId;
     private Map<String, Object> infoColecta;
-    private FirebaseAuth mAuth;
-    private FirebaseUser user;
     private ArrayList<Map<String, String>> participantes;
     private SectionsPagerAdapter mSectionsPagerAdapter;
     private ViewPager mViewPager;
@@ -76,8 +75,6 @@ public class Colecta extends AppCompatActivity implements
     private String lugar;
     private ArrayList<String> audios;
     private ArrayList<String> fotos;
-
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,9 +116,6 @@ public class Colecta extends AppCompatActivity implements
 
             }
         });
-
-        mAuth = FirebaseAuth.getInstance();
-        user = mAuth.getCurrentUser();
 
         docId = getIntent().getExtras().getString("DocID");
     }
@@ -349,7 +343,6 @@ public class Colecta extends AppCompatActivity implements
 
     @Override
     public void onFragmentInteraction(Uri uri) {
-
     }
 
     public class SectionsPagerAdapter extends FragmentPagerAdapter {

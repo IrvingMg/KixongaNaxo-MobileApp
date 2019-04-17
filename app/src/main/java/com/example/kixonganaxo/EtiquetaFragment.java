@@ -1,8 +1,6 @@
 package com.example.kixonganaxo;
 
-import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.TextInputLayout;
@@ -11,46 +9,39 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.RadioButton;
 import android.widget.RadioGroup;
 
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.GeoPoint;
 
-import org.w3c.dom.Text;
-
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import javax.annotation.Nullable;
 
-/**
- * A simple {@link Fragment} subclass.
- * Activities that contain this fragment must implement the
- * {@link EtiquetaFragment.OnFragmentInteractionListener} interface
- * to handle interaction events.
- * Use the {@link EtiquetaFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
+
 public class EtiquetaFragment extends Fragment {
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String COLECTAID = "ColectaId";
+    private static final String ETIQUETA_ID = "EtiquetaID";
+    private static final String NUEVA_ETIQUETA = "NuevaEtiqueta";
     private final String TAG = "KixongaNaxo";
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
-
-    // TODO: Rename and change types of parameters
-    private String colectaId;
     private OnFragmentInteractionListener mListener;
+    private Map<String, Object> docEtiqueta;
+    private String etiquetaId;
+    private boolean nuevaEtiqueta;
 
     public EtiquetaFragment() {
         // Required empty public constructor
     }
 
-    // TODO: Rename and change types and number of parameters
-    public static EtiquetaFragment newInstance(String colectaId) {
+    public static EtiquetaFragment newInstance(String id, Boolean bandera) {
         EtiquetaFragment fragment = new EtiquetaFragment();
         Bundle args = new Bundle();
-        args.putString(COLECTAID, colectaId);
+        args.putString(ETIQUETA_ID, id);
+        args.putBoolean(NUEVA_ETIQUETA, bandera);
         fragment.setArguments(args);
         return fragment;
     }
@@ -59,21 +50,91 @@ public class EtiquetaFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            colectaId = getArguments().getString(COLECTAID);
+            etiquetaId = getArguments().getString(ETIQUETA_ID);
+            nuevaEtiqueta = getArguments().getBoolean(NUEVA_ETIQUETA);
         }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_etiqueta, container, false);
+        View view = inflater.inflate(R.layout.fragment_etiqueta, container, false);
+        initEtiquetaColecta(view);
+        return view;
     }
 
-    // TODO: Rename method, update argument and hook method into UI event
-    public void onButtonPressed(Uri uri) {
-        if (mListener != null) {
-            mListener.onFragmentInteraction(uri);
+    private void initEtiquetaColecta(final View v) {
+        if (nuevaEtiqueta == false) {
+            db.collection("etiquetas")
+                    .document(etiquetaId)
+                    .addSnapshotListener(new EventListener<DocumentSnapshot>() {
+                        @Override
+                        public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
+                            if (e != null) {
+                                Log.w(TAG, "Listen error", e);
+                                return;
+                            }
+
+                            if (documentSnapshot != null && documentSnapshot.exists()) {
+                                docEtiqueta = documentSnapshot.getData();
+
+                                RadioGroup habito = v.findViewById(R.id.habito);
+                                String habitoVal = docEtiqueta.get("habito").toString();
+                                int radioChecked = 0;
+                                switch (habitoVal) {
+                                    case "Rastrera":
+                                        radioChecked = R.id.rastrera;
+                                        break;
+                                    case "Epifita":
+                                        radioChecked = R.id.epifita;
+                                        break;
+                                    case "Hierba":
+                                        radioChecked = R.id.hierba;
+                                        break;
+                                    case "Arbusto":
+                                        radioChecked = R.id.arbusto;
+                                        break;
+                                    case "Árbol":
+                                        radioChecked = R.id.arbol;
+                                        break;
+                                    default:
+                                }
+                                habito.check(radioChecked);
+
+                                //DAP
+                                String dapVal = docEtiqueta.get("dap").toString();
+                                TextInputLayout dap = v.findViewById(R.id.dap);
+                                dap.getEditText().setText(dapVal);
+
+                                //Abundancia
+                                String abundanciaVal = docEtiqueta.get("abundancia").toString();
+                                TextInputLayout abundancia = v.findViewById(R.id.abundancia);
+                                abundancia.getEditText().setText(abundanciaVal);
+
+                                //Lugar
+                                String lugarVal = docEtiqueta.get("caracteristicas_lugar").toString();
+                                TextInputLayout lugar = v.findViewById(R.id.caracteristicas_lugar);
+                                lugar.getEditText().setText(lugarVal);
+
+                                //Flores
+                                String florVal = docEtiqueta.get("descripcion_flores").toString();
+                                TextInputLayout flor = v.findViewById(R.id.descripcion_flores);
+                                flor.getEditText().setText(florVal);
+
+                                //Hojas
+                                String hojasVal = docEtiqueta.get("descripcion_hojas").toString();
+                                TextInputLayout hojas = v.findViewById(R.id.descripcion_hojas);
+                                hojas.getEditText().setText(hojasVal);
+
+                                //Latex
+                                String latexVal = docEtiqueta.get("descripcion_latex").toString();
+                                TextInputLayout latex = v.findViewById(R.id.descripcion_latex);
+                                latex.getEditText().setText(latexVal);
+                            } else {
+                                Log.d(TAG, "Data: null");
+                            }
+                        }
+                    });
         }
     }
 
@@ -94,18 +155,6 @@ public class EtiquetaFragment extends Fragment {
         mListener = null;
     }
 
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
-     */
     public interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
-        void onFragmentInteraction(Uri uri);
     }
 }

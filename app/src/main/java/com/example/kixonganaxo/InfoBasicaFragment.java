@@ -33,7 +33,11 @@ import android.widget.Toast;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.GeoPoint;
 
 import org.w3c.dom.Text;
 
@@ -48,17 +52,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import javax.annotation.Nullable;
+
 import static android.app.Activity.RESULT_OK;
 import static android.support.v4.content.ContextCompat.getDataDir;
 import static android.support.v4.content.ContextCompat.getSystemService;
 
 public class InfoBasicaFragment extends Fragment {
-    private static final String DATOS = "DatosEtiqueta";
+    private static final String ETIQUETA_ID = "EtiquetaID";
     private static final String NUEVA_ETIQUETA = "NuevaEtiqueta";
     private static final String PATH_FOTOS = "PathFotos";
     private static final String PATH_NOTAS = "PathNotas";
     private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
     private final String TAG = "KixongaNaxo";
+    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private OnFragmentInteractionListener mListener;
     private MediaRecorder recorder = null;
     private boolean mStartRecording = true;
@@ -71,6 +78,7 @@ public class InfoBasicaFragment extends Fragment {
     private String notaName = null;
     private List<String> dataNotas = new ArrayList<>();
     private ArrayAdapter<String> adapterNotas;
+    private String etiquetaId;
     private boolean nuevaEtiqueta;
     private String directorioNotas;
     private String directorioFotos;
@@ -80,11 +88,11 @@ public class InfoBasicaFragment extends Fragment {
         // Required empty public constructor
     }
 
-    public static InfoBasicaFragment newInstance(Map<String, Object> documento, Boolean bandera,
+    public static InfoBasicaFragment newInstance(String id, Boolean bandera,
                                                  String fotos, String notas) {
         InfoBasicaFragment fragment = new InfoBasicaFragment();
         Bundle args = new Bundle();
-        args.putSerializable(DATOS, (Serializable) documento);
+        args.putString(ETIQUETA_ID, id);
         args.putBoolean(NUEVA_ETIQUETA, bandera);
         args.putString(PATH_FOTOS, fotos);
         args.putString(PATH_NOTAS, notas);
@@ -96,7 +104,7 @@ public class InfoBasicaFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            docEtiqueta = (Map<String, Object>) getArguments().getSerializable(DATOS);
+            etiquetaId = getArguments().getString(ETIQUETA_ID);
             nuevaEtiqueta = getArguments().getBoolean(NUEVA_ETIQUETA);
             directorioFotos = getArguments().getString(PATH_FOTOS);
             directorioNotas = getArguments().getString(PATH_NOTAS);
@@ -106,16 +114,85 @@ public class InfoBasicaFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-
         View view = inflater.inflate(R.layout.fragment_info_basica, container, false);
-        cargarGPS(view);
-        cargarGrabadora(view);
-        cargarCamara(view);
-
+        initInfoBasica(view);
         return view;
     }
 
-    private void cargarGPS(final View v) {
+    private void initInfoBasica(final View v) {
+        initGPS(v);
+        initGrabadora(v);
+        initCamara(v);
+
+        if (nuevaEtiqueta == false) {
+
+            List<String> listaNotas = getListaArchivos(directorioNotas);
+            if (listaNotas.size() > 0) {
+                dataNotas.clear();
+                for (String nota : listaNotas) {
+                    dataNotas.add(nota);
+                }
+                adapterNotas.notifyDataSetChanged();
+            }
+
+            List<String> listaFotos = getListaArchivos(directorioFotos);
+            if (listaFotos.size() > 0) {
+                dataFotos.clear();
+                for (String foto : listaFotos) {
+                    dataFotos.add(foto);
+                }
+                adapterFotos.notifyDataSetChanged();
+            }
+
+            db.collection("etiquetas")
+                    .document(etiquetaId)
+                    .addSnapshotListener(new EventListener<DocumentSnapshot>() {
+                        @Override
+                        public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
+                            if (e != null) {
+                                Log.w(TAG, "Listen error", e);
+                                return;
+                            }
+
+                            if (documentSnapshot != null && documentSnapshot.exists()) {
+                                docEtiqueta = documentSnapshot.getData();
+
+                                TextInputLayout nombreComun = v.findViewById(R.id.nombre_comun);
+                                String nombre = docEtiqueta.get("nombre_comun").toString();
+                                nombreComun.getEditText().setText(nombre);
+
+                                TextInputLayout latitud = v.findViewById(R.id.latitud);
+                                TextInputLayout longitud = v.findViewById(R.id.longitud);
+                                GeoPoint geoPoint = (GeoPoint) docEtiqueta.get("ubicacion");
+                                Double lat = geoPoint.getLatitude();
+                                Double lng = geoPoint.getLongitude();
+                                latitud.getEditText().setText(lat.toString());
+                                longitud.getEditText().setText(lng.toString());
+                            } else {
+                                Log.d(TAG, "Data: null");
+                            }
+                        }
+                    });
+        }
+    }
+
+    private List<String> getListaArchivos(String directory) {
+        List<String> lista = new ArrayList<>();
+        File dir = new File(directory);
+
+        if (dir.isDirectory())
+        {
+            String[] children = dir.list();
+            for (int i = 0; i < children.length; i++)
+            {
+                lista.add(children[i]);
+            }
+        }
+
+        return lista;
+    }
+
+    private void initGPS(final View v) {
         Button button = v.findViewById(R.id.GPS);
 
         final LocationListener locationListener = new LocationListener() {
@@ -167,13 +244,9 @@ public class InfoBasicaFragment extends Fragment {
         });
     }
 
-    private void cargarGrabadora(View v) {
+    private void initGrabadora(View v) {
         // Inicializar lista de audios
-        if (nuevaEtiqueta == true) {
-            dataNotas.clear();
-        } else {
-            Log.d(TAG, "Cargar Audios: " + directorioNotas);
-        }
+        dataNotas.clear();
         ListView listaNotas = v.findViewById(R.id.lista_notas);
         adapterNotas = new ArrayAdapter<>(getActivity(),
                 android.R.layout.simple_list_item_1, android.R.id.text1, dataNotas);
@@ -197,7 +270,7 @@ public class InfoBasicaFragment extends Fragment {
         });
     }
 
-    private void cargarCamara(View v) {
+    private void initCamara(View v) {
         // Fotos
         dataFotos.clear();
         ListView listaFotos = v.findViewById(R.id.lista_fotos);

@@ -69,8 +69,8 @@ public class Recolectar extends AppCompatActivity implements
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private String colectaId;
     private String etiquetaId;
-    private Map<String, Object> docEtiqueta;
-    private boolean nuevaEtiqueta;
+    private Map<String, Object> docEtiqueta = new HashMap<>();
+    private boolean nuevaEtiqueta = false;
     private String directorioNotas;
     private String directorioFotos;
 
@@ -102,9 +102,8 @@ public class Recolectar extends AppCompatActivity implements
 
         colectaId = getIntent().getExtras().getString("ColectaID");
         etiquetaId = getIntent().getExtras().getString("EtiquetaID");
-        if (etiquetaId != null) {
-            initEtiqueta();
-        } else {
+
+        if (etiquetaId == null) {
             initNuevaEtiqueta();
         }
         getDirectorios();
@@ -122,32 +121,8 @@ public class Recolectar extends AppCompatActivity implements
         directorioFotos = directoryFotos.toString();
     }
 
-    private void initEtiqueta() {
-        nuevaEtiqueta = false;
-
-        db.collection("etiquetas")
-                .document(etiquetaId)
-                .addSnapshotListener(new EventListener<DocumentSnapshot>() {
-                    @Override
-                    public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
-                        if (e != null) {
-                            Log.w(TAG, "Listen error", e);
-                            return;
-                        }
-
-                        // Read the data
-                        if (documentSnapshot != null && documentSnapshot.exists()) {
-                            docEtiqueta = documentSnapshot.getData();
-                        } else {
-                            Log.d(TAG, "Data: null");
-                        }
-                    }
-                });
-    }
-
     private void initNuevaEtiqueta() {
         nuevaEtiqueta = true;
-        docEtiqueta = new HashMap<>();
 
         DocumentReference etiquetaRef = db.collection("etiquetas").document();
         etiquetaId = etiquetaRef.getId();
@@ -310,10 +285,6 @@ public class Recolectar extends AppCompatActivity implements
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    public void onFragmentInteraction(Uri uri) {
-    }
-
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
         public SectionsPagerAdapter(FragmentManager fm) {
@@ -325,15 +296,19 @@ public class Recolectar extends AppCompatActivity implements
             switch (position) {
                 case 0:
                     InfoBasicaFragment infoBasicaFragment = new InfoBasicaFragment();
-                    Bundle bundle = new Bundle();
-                    bundle.putSerializable("DatosEtiqueta", (Serializable) docEtiqueta);
-                    bundle.putSerializable("NuevaEtiqueta", nuevaEtiqueta);
-                    bundle.putString("PathFotos", directorioFotos);
-                    bundle.putString("PathNotas", directorioNotas);
-                    infoBasicaFragment.setArguments(bundle);
+                    Bundle bundleInfo = new Bundle();
+                    bundleInfo.putString("EtiquetaID", etiquetaId);
+                    bundleInfo.putBoolean("NuevaEtiqueta", nuevaEtiqueta);
+                    bundleInfo.putString("PathFotos", directorioFotos);
+                    bundleInfo.putString("PathNotas", directorioNotas);
+                    infoBasicaFragment.setArguments(bundleInfo);
                     return  infoBasicaFragment;
                 case 1:
                     EtiquetaFragment etiquetaFragment = new EtiquetaFragment();
+                    Bundle bundleEtiqueta = new Bundle();
+                    bundleEtiqueta.putString("EtiquetaID", etiquetaId);
+                    bundleEtiqueta.putBoolean("NuevaEtiqueta", nuevaEtiqueta);
+                    etiquetaFragment.setArguments(bundleEtiqueta);
                     return  etiquetaFragment;
                 default:
                     return null;
