@@ -2,11 +2,10 @@ package com.example.kixonganaxo;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -16,11 +15,12 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 
 public class Login extends AppCompatActivity {
     private final String TAG = "KixongaNaxo";
-    private FirebaseAuth mAuth;
+    private final FirebaseAuth mAuth = FirebaseAuth.getInstance();
+    private String email;
+    private String password;
     private ProgressDialog alerta;
 
     @Override
@@ -28,16 +28,14 @@ public class Login extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        mAuth = FirebaseAuth.getInstance();
-
-        final TextInputLayout correo = findViewById(R.id.correo);
-        final TextInputLayout contrasena = findViewById(R.id.contrasena);
         Button login = findViewById(R.id.login);
         login.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                final String email = correo.getEditText().getText().toString();
-                final String password = contrasena.getEditText().getText().toString();
+                TextInputLayout correo = findViewById(R.id.correo);
+                TextInputLayout contrasena = findViewById(R.id.contrasena);
+                email = correo.getEditText().getText().toString();
+                password = contrasena.getEditText().getText().toString();
 
                 alerta = ProgressDialog.show(Login.this, "",
                         "Iniciando sesión...", true);
@@ -53,9 +51,9 @@ public class Login extends AppCompatActivity {
                                     startActivity(i);
                                     finish();
                                 } else {
+                                    String error = task.getException().getMessage();
                                     Toast.makeText(Login.this,
-                                            "Error al iniciar sesión. Intente de nuevo.",
-                                            Toast.LENGTH_LONG).show();
+                                            error, Toast.LENGTH_LONG).show();
                                 }
                             }
                         });

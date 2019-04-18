@@ -5,7 +5,7 @@
     android:id="@+id/container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_margin="16dp"
+    android:padding="16dp"
     tools:context=".Restablecer">
 
     <TextView
@@ -24,8 +24,8 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/etiquetaTitulo"
         android:layout_marginTop="48dp"
-        android:hint="Correo"
-        app:helperText="Ingrese su correo para restablecer la contraseña. ">
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:hint="Correo">
 
         <android.support.design.widget.TextInputEditText
             android:layout_width="match_parent"

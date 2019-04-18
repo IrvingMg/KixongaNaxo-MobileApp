@@ -4,7 +4,7 @@
     android:id="@+id/container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_margin="16dp"
+    android:padding="16dp"
     tools:context=".Login">
 
     <TextView
@@ -23,6 +23,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/etiquetaTitulo"
         android:layout_marginTop="48dp"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:hint="Correo">
 
         <android.support.design.widget.TextInputEditText
@@ -37,6 +38,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/correo"
         android:layout_marginTop="16dp"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
         android:hint="Contraseña">
 
         <android.support.design.widget.TextInputEditText
@@ -52,7 +54,8 @@
         android:text="¿Olvidaste tu contraseña?"
         android:layout_below="@id/contrasena"
         android:layout_marginTop="16dp"
-        android:layout_alignParentRight="true"/>
+        android:layout_alignParentRight="true"
+        android:textStyle="bold"/>
 
     <Button
         android:id="@+id/login"

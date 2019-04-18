@@ -32,10 +32,10 @@ import java.util.Map;
 public class MapaFragment extends SupportMapFragment implements OnMapReadyCallback,
         GoogleMap.OnMarkerClickListener {
 
-    private static final String DOCID = "DocID";
+    private static final String COLECTA_ID = "COLECTA_ID";
     private final String TAG = "KixongaNaxo";
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
-    private String docId;
+    private String colectaId;
     private GoogleMap mMap;
 
     private OnFragmentInteractionListener mListener;
@@ -44,10 +44,10 @@ public class MapaFragment extends SupportMapFragment implements OnMapReadyCallba
         // Required empty public constructor
     }
 
-    public static MapaFragment newInstance(String docId) {
+    public static MapaFragment newInstance(String id) {
         MapaFragment fragment = new MapaFragment();
         Bundle args = new Bundle();
-        args.putString(DOCID, docId);
+        args.putString(COLECTA_ID, id);
         fragment.setArguments(args);
         return fragment;
     }
@@ -56,7 +56,7 @@ public class MapaFragment extends SupportMapFragment implements OnMapReadyCallba
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            docId = getArguments().getString(DOCID);
+            colectaId = getArguments().getString(COLECTA_ID);
         }
     }
 
@@ -70,7 +70,7 @@ public class MapaFragment extends SupportMapFragment implements OnMapReadyCallba
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         //Posición inicial
-        db.collection("colectas").document(docId).get()
+        db.collection("colectas").document(colectaId).get()
                 .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
                     @Override
                     public void onComplete(@NonNull Task<DocumentSnapshot> task) {

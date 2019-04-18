@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.Map;
 
 public class RecoleccionFragment extends Fragment {
-    private static final String COLECTA_ID = "DocID";
+    private static final String COLECTA_ID = "COLECTA_ID";
     private final String TAG = "KixongaNaxo";
     private final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();

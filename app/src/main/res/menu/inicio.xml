@@ -7,4 +7,9 @@
         android:orderInCategory="100"
         android:title="Ordenar por"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/action_sync"
+        android:orderInCategory="101"
+        android:title="Actualizar"
+        app:showAsAction="never" />
 </menu>

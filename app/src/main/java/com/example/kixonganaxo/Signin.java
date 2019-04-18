@@ -2,10 +2,10 @@ package com.example.kixonganaxo;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -21,7 +21,11 @@ import com.google.firebase.auth.UserProfileChangeRequest;
 
 public class Signin extends AppCompatActivity {
     private final String TAG = "KixongaNaxo";
-    private FirebaseAuth mAuth;
+    private final FirebaseAuth mAuth = FirebaseAuth.getInstance();
+    private String name;
+    private String email;
+    private String password;
+    private String confirmacionPass;
     private ProgressDialog alerta;
 
     @Override
@@ -29,27 +33,26 @@ public class Signin extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_signin);
 
-        mAuth = FirebaseAuth.getInstance();
-
-        TextView login = findViewById(R.id.login);
-        login.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent i = new Intent(Signin.this, Login.class);
-                startActivity(i);
-            }
-        });
-
-        final TextInputLayout nombre = findViewById(R.id.nombre);
-        final TextInputLayout correo = findViewById(R.id.correo);
-        final TextInputLayout contrasena = findViewById(R.id.contrasena);
         Button registrar = findViewById(R.id.registrar);
         registrar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                final String name = nombre.getEditText().getText().toString();
-                final String email = correo.getEditText().getText().toString();
-                final String password = contrasena.getEditText().getText().toString();
+                TextInputLayout nombre = findViewById(R.id.nombre);
+                TextInputLayout correo = findViewById(R.id.correo);
+                TextInputLayout contrasena = findViewById(R.id.contrasena);
+                TextInputLayout confirmacion = findViewById(R.id.confirmacion);
+                name = nombre.getEditText().getText().toString();
+                email = correo.getEditText().getText().toString();
+                password = contrasena.getEditText().getText().toString();
+                confirmacionPass = confirmacion.getEditText().getText().toString();
+
+                if (password.equals(confirmacionPass) == false) {
+                    Toast.makeText(Signin.this,
+                            "Revise que la contraseña coincida.",
+                            Toast.LENGTH_LONG).show();
+
+                    return;
+                }
 
                 alerta = ProgressDialog.show(Signin.this, "",
                         "Registrando usuario...", true);
@@ -66,7 +69,6 @@ public class Signin extends AppCompatActivity {
                                     UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest
                                             .Builder()
                                             .setDisplayName(name).build();
-
                                     user.updateProfile(profileUpdates);
                                     user.sendEmailVerification();
 
@@ -74,13 +76,22 @@ public class Signin extends AppCompatActivity {
                                     startActivity(i);
                                     finish();
                                 } else {
+                                    String error = task.getException().getMessage();
                                     Toast.makeText(Signin.this,
-                                            "Error al registrar usuario. Intente de nuevo.",
-                                            Toast.LENGTH_LONG).show();
+                                            error, Toast.LENGTH_LONG).show();
                                 }
                             }
                         });
                 }
+        });
+
+        TextView login = findViewById(R.id.login);
+        login.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent i = new Intent(Signin.this, Login.class);
+                startActivity(i);
+            }
         });
     }
 }

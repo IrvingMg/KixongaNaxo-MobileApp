@@ -100,7 +100,7 @@ public class Recolectar extends AppCompatActivity implements
             }
         });
 
-        colectaId = getIntent().getExtras().getString("ColectaID");
+        colectaId = getIntent().getExtras().getString("COLECTA_ID");
         etiquetaId = getIntent().getExtras().getString("EtiquetaID");
 
         if (etiquetaId == null) {
@@ -141,7 +141,7 @@ public class Recolectar extends AppCompatActivity implements
         ArrayList<String> fotos = new ArrayList<>();
         docEtiqueta.put("fotografias", fotos);
 
-        String lugar = getIntent().getExtras().getString("Lugar");
+        String lugar = getIntent().getExtras().getString("LUGAR_COLECTA");
         docEtiqueta.put("lugar", lugar);
 
         ArrayList<String> audios = new ArrayList<>();
