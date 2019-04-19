@@ -6,7 +6,6 @@
     android:layout_height="match_parent"
     tools:context=".PlaneacionFragment">
 
-    <!-- TODO: Update blank fragment layout -->
     <RelativeLayout
         android:id="@+id/containerRelative"
         android:layout_width="match_parent"
@@ -18,16 +17,17 @@
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
             android:text="Responsable"
-            android:textStyle="bold"
-            android:textSize="16dp"/>
+            android:textAppearance="?attr/textAppearanceListItem" />
         <TextView
             android:id="@+id/responsable"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="No hay información disponible."
             android:layout_below="@id/labelResponsable"
-            android:textSize="14dp"
-            android:layout_marginLeft="8dp"/>
+            android:textAppearance="?attr/textAppearanceListItemSecondary"
+            android:layout_marginLeft="8dp"
+            android:layout_marginStart="8dp"
+            android:alpha="0.6"/>
 
         <TextView
             android:id="@+id/labelObjetivo"
@@ -35,8 +35,7 @@
             android:layout_height="wrap_content"
             android:text="Objetivo"
             android:layout_below="@id/responsable"
-            android:textStyle="bold"
-            android:textSize="16dp"
+            android:textAppearance="?attr/textAppearanceListItem"
             android:layout_marginTop="8dp"/>
         <TextView
             android:id="@+id/objetivo"
@@ -44,8 +43,10 @@
             android:layout_height="wrap_content"
             android:text="No hay información disponible."
             android:layout_below="@id/labelObjetivo"
-            android:textSize="14dp"
-            android:layout_marginLeft="8dp"/>
+            android:textAppearance="?attr/textAppearanceListItemSecondary"
+            android:layout_marginLeft="8dp"
+            android:layout_marginStart="8dp"
+            android:alpha="0.6"/>
 
         <TextView
             android:id="@+id/labelTipo"
@@ -53,8 +54,7 @@
             android:layout_height="wrap_content"
             android:text="Tipo de colecta"
             android:layout_below="@id/objetivo"
-            android:textStyle="bold"
-            android:textSize="16dp"
+            android:textAppearance="?attr/textAppearanceListItem"
             android:layout_marginTop="8dp"/>
         <TextView
             android:id="@+id/tipo"
@@ -62,8 +62,10 @@
             android:layout_height="wrap_content"
             android:text="No hay información disponible."
             android:layout_below="@id/labelTipo"
-            android:textSize="16dp"
-            android:layout_marginLeft="8dp"/>
+            android:textAppearance="?attr/textAppearanceListItemSecondary"
+            android:layout_marginLeft="8dp"
+            android:layout_marginStart="8dp"
+            android:alpha="0.6"/>
 
         <TextView
             android:id="@+id/labelFecha"
@@ -71,8 +73,7 @@
             android:layout_height="wrap_content"
             android:text="Fecha de colecta"
             android:layout_below="@id/tipo"
-            android:textStyle="bold"
-            android:textSize="16dp"
+            android:textAppearance="?attr/textAppearanceListItem"
             android:layout_marginTop="8dp"/>
         <TextView
             android:id="@+id/fecha"
@@ -80,8 +81,10 @@
             android:layout_height="wrap_content"
             android:text="No hay información disponible."
             android:layout_below="@id/labelFecha"
-            android:textSize="14dp"
-            android:layout_marginLeft="8dp"/>
+            android:textAppearance="?attr/textAppearanceListItemSecondary"
+            android:layout_marginLeft="8dp"
+            android:layout_marginStart="8dp"
+            android:alpha="0.6"/>
 
         <TextView
             android:id="@+id/labelLugar"
@@ -89,8 +92,7 @@
             android:layout_height="wrap_content"
             android:text="Lugar de colecta"
             android:layout_below="@id/fecha"
-            android:textStyle="bold"
-            android:textSize="16dp"
+            android:textAppearance="?attr/textAppearanceListItem"
             android:layout_marginTop="8dp"/>
         <TextView
             android:id="@+id/lugar"
@@ -98,8 +100,10 @@
             android:layout_height="wrap_content"
             android:text="No hay información disponible."
             android:layout_below="@id/labelLugar"
-            android:textSize="14dp"
-            android:layout_marginLeft="8dp"/>
+            android:textAppearance="?attr/textAppearanceListItemSecondary"
+            android:layout_marginLeft="8dp"
+            android:layout_marginStart="8dp"
+            android:alpha="0.6"/>
 
         <TextView
             android:id="@+id/labelEspecies"
@@ -107,8 +111,7 @@
             android:layout_height="wrap_content"
             android:text="Especies de interés"
             android:layout_below="@id/lugar"
-            android:textStyle="bold"
-            android:textSize="16dp"
+            android:textAppearance="?attr/textAppearanceListItem"
             android:layout_marginTop="8dp"/>
         <TextView
             android:id="@+id/especies"
@@ -116,8 +119,10 @@
             android:layout_height="wrap_content"
             android:text="No hay información disponible."
             android:layout_below="@id/labelEspecies"
-            android:textSize="14dp"
-            android:layout_marginLeft="8dp"/>
+            android:textAppearance="?attr/textAppearanceListItemSecondary"
+            android:layout_marginLeft="8dp"
+            android:layout_marginStart="8dp"
+            android:alpha="0.6"/>
 
         <TextView
             android:id="@+id/labelMaterial"
@@ -125,8 +130,7 @@
             android:layout_height="wrap_content"
             android:text="Material de campo"
             android:layout_below="@id/especies"
-            android:textStyle="bold"
-            android:textSize="16dp"
+            android:textAppearance="?attr/textAppearanceListItem"
             android:layout_marginTop="8dp"/>
         <TextView
             android:id="@+id/material"
@@ -134,8 +138,10 @@
             android:layout_height="wrap_content"
             android:text="No hay información disponible."
             android:layout_below="@id/labelMaterial"
-            android:textSize="14dp"
-            android:layout_marginLeft="8dp"/>
+            android:textAppearance="?attr/textAppearanceListItemSecondary"
+            android:layout_marginLeft="8dp"
+            android:layout_marginStart="8dp"
+            android:alpha="0.6"/>
 
         <TextView
             android:id="@+id/labelInfoConsulta"
@@ -143,8 +149,7 @@
             android:layout_height="wrap_content"
             android:text="Información de consulta"
             android:layout_below="@id/material"
-            android:textStyle="bold"
-            android:textSize="16dp"
+            android:textAppearance="?attr/textAppearanceListItem"
             android:layout_marginTop="8dp"/>
         <TextView
             android:id="@+id/infoConsulta"
@@ -152,8 +157,10 @@
             android:layout_height="wrap_content"
             android:text="No hay información disponible."
             android:layout_below="@id/labelInfoConsulta"
-            android:textSize="14dp"
-            android:layout_marginLeft="8dp"/>
+            android:textAppearance="?attr/textAppearanceListItemSecondary"
+            android:layout_marginLeft="8dp"
+            android:layout_marginStart="8dp"
+            android:alpha="0.6"/>
 
         <TextView
             android:id="@+id/labelInfoAdicional"
@@ -161,8 +168,7 @@
             android:layout_height="wrap_content"
             android:text="Información adicional"
             android:layout_below="@id/infoConsulta"
-            android:textStyle="bold"
-            android:textSize="16dp"
+            android:textAppearance="?attr/textAppearanceListItem"
             android:layout_marginTop="8dp"/>
         <TextView
             android:id="@+id/infoAdicional"
@@ -170,7 +176,9 @@
             android:layout_height="wrap_content"
             android:text="No hay información disponible."
             android:layout_below="@id/labelInfoAdicional"
-            android:textSize="14dp"
-            android:layout_marginLeft="8dp"/>
+            android:textAppearance="?attr/textAppearanceListItemSecondary"
+            android:layout_marginLeft="8dp"
+            android:layout_marginStart="8dp"
+            android:alpha="0.6"/>
     </RelativeLayout>
 </android.support.v4.widget.NestedScrollView>

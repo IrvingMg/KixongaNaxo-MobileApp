@@ -12,7 +12,6 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -23,6 +22,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -43,8 +43,8 @@ public class Inicio extends AppCompatActivity
     private final String TAG = "KixongaNaxo";
     private final FirebaseAuth mAuth = FirebaseAuth.getInstance();
     private final FirebaseUser user = mAuth.getCurrentUser();
-    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private FirebaseAuth.AuthStateListener mAuthListener;
+    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private List<Map<String, String>> data = new ArrayList<>();
     private List<String> listaIdColectas = new ArrayList<>();
     private SimpleAdapter adapter;
@@ -68,13 +68,13 @@ public class Inicio extends AppCompatActivity
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        userListener();
         initListaColectas("titulo", Query.Direction.ASCENDING);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
+        initUsuario();
         mAuth.addAuthStateListener(mAuthListener);
     }
 
@@ -145,9 +145,8 @@ public class Inicio extends AppCompatActivity
     }
 
     // Métodos privados
-    private void userListener() {
+    private void initUsuario() {
         mAuthListener = new FirebaseAuth.AuthStateListener() {
-
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 if (user != null) {
@@ -160,15 +159,16 @@ public class Inicio extends AppCompatActivity
                     TextView correoUsuario = headerView.findViewById(R.id.correoUsuario);
                     correoUsuario.setText(user.getEmail());
 
-                    if(!user.isEmailVerified()) {
-                        Toast.makeText(Inicio.this,
-                                "Verifique su dirección de correo.",
-                                Toast.LENGTH_LONG).show();
-                    }
-                } else {
-                    Intent i = new Intent(Inicio.this, Login.class);
-                    startActivity(i);
-                    finish();
+                    user.reload().addOnSuccessListener(new OnSuccessListener<Void>() {
+                        @Override
+                        public void onSuccess(Void aVoid) {
+                            if(!user.isEmailVerified()) {
+                                Toast.makeText(Inicio.this,
+                                        "Verifique su dirección de correo.",
+                                        Toast.LENGTH_LONG).show();
+                            }
+                        }
+                    });
                 }
             }
         };
@@ -187,6 +187,9 @@ public class Inicio extends AppCompatActivity
                         alerta.dismiss();
                         resetListaColectas();
 
+                        if (task.getResult() == null) {
+                            return;
+                        }
                         TextView listaVacia = findViewById(R.id.mensajeVacio);
                         if (task.getResult().size() == 0) {
                             listaVacia.setVisibility(View.VISIBLE);
@@ -197,7 +200,7 @@ public class Inicio extends AppCompatActivity
                         for (DocumentSnapshot document : task.getResult()) {
                             listaIdColectas.add(document.getId());
 
-                            Map<String, String> datum = new HashMap<String, String>(3);
+                            Map<String, String> datum = new HashMap<>(3);
                             datum.put("Text1", document.getData().get("titulo").toString());
                             datum.put("Text2",document.getData().get("lugar").toString());
                             datum.put("Text3", document.getData().get("fecha").toString());
