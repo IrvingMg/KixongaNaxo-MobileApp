@@ -9,82 +9,67 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="16dp">
-        <TextView
-            android:id="@+id/etiqueta_habito"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Hábito de la planta"/>
-        <RadioGroup
+
+        <Spinner
             android:id="@+id/habito"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:checkedButton="@+id/rastrera"
-            android:orientation="vertical"
-            android:layout_below="@+id/etiqueta_habito">
-            <RadioButton
-                android:id="@+id/rastrera"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Rastrera"/>
-            <RadioButton
-                android:id="@+id/epifita"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Epifita"/>
-            <RadioButton
-                android:id="@+id/hierba"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Hierba"/>
-            <RadioButton
-                android:id="@+id/arbusto"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Arbusto"/>
-            <RadioButton
-                android:id="@+id/arbol"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Árbol"/>
-        </RadioGroup>
+            android:layout_alignParentTop="true"
+            style="@style/Base.Widget.AppCompat.Spinner.Underlined"/>
 
-        <android.support.design.widget.TextInputLayout
-            android:id="@+id/dap"
+        <LinearLayout
+            android:id="@+id/dap-abundancia"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/habito"
-            android:hint="Diámetro del tallo (DAP)">
+            android:layout_marginTop="8dp"
+            android:layout_below="@id/habito">
 
-            <android.support.design.widget.TextInputEditText
-                android:layout_width="match_parent"
+            <android.support.design.widget.TextInputLayout
+                android:id="@+id/dap"
+                android:layout_width="0dp"
+                android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:inputType="numberDecimal" />
-        </android.support.design.widget.TextInputLayout>
+                android:layout_marginRight="8dp"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:hint="Diámetro (cm)">
 
-        <android.support.design.widget.TextInputLayout
-            android:id="@+id/abundancia"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/dap"
-            android:hint="Abundancia de la planta">
+                <android.support.design.widget.TextInputEditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:imeOptions="actionNext"
+                    android:nextFocusDown="@id/abundancia"
+                    android:inputType="numberDecimal" />
+            </android.support.design.widget.TextInputLayout>
 
-            <android.support.design.widget.TextInputEditText
-                android:layout_width="match_parent"
+            <android.support.design.widget.TextInputLayout
+                android:id="@+id/abundancia"
+                android:layout_width="0dp"
+                android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:inputType="numberDecimal" />
-        </android.support.design.widget.TextInputLayout>
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:hint="Abundancia (m2)">
+
+                <android.support.design.widget.TextInputEditText
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="numberDecimal" />
+            </android.support.design.widget.TextInputLayout>
+        </LinearLayout>
 
         <android.support.design.widget.TextInputLayout
             android:id="@+id/caracteristicas_lugar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/abundancia"
+            android:layout_below="@id/dap-abundancia"
+            android:layout_marginTop="8dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:hint="Características del lugar">
 
             <android.support.design.widget.TextInputEditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textMultiLine" />
+                android:inputType="textMultiLine"
+                android:lines="2"/>
         </android.support.design.widget.TextInputLayout>
 
         <android.support.design.widget.TextInputLayout
@@ -92,12 +77,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/caracteristicas_lugar"
+            android:layout_marginTop="8dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:hint="Descripción de las flores">
 
             <android.support.design.widget.TextInputEditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textMultiLine" />
+                android:inputType="textMultiLine"
+                android:lines="2"/>
         </android.support.design.widget.TextInputLayout>
 
         <android.support.design.widget.TextInputLayout
@@ -105,12 +93,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/descripcion_flores"
+            android:layout_marginTop="8dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:hint="Descripción de las hojas">
 
             <android.support.design.widget.TextInputEditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textMultiLine" />
+                android:inputType="textMultiLine"
+                android:lines="2"/>
         </android.support.design.widget.TextInputLayout>
 
         <android.support.design.widget.TextInputLayout
@@ -118,13 +109,17 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_below="@id/descripcion_hojas"
+            android:layout_marginTop="8dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:hint="Descripción del látex (Opcional)">
 
             <android.support.design.widget.TextInputEditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textMultiLine" />
+                android:inputType="textMultiLine"
+                android:lines="2"/>
         </android.support.design.widget.TextInputLayout>
+
     </RelativeLayout>
 
 </android.support.v4.widget.NestedScrollView>

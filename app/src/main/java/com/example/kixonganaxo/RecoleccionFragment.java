@@ -120,8 +120,8 @@ public class RecoleccionFragment extends Fragment {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 String etiquetaId = listaIdEtiquetas.get(position);
                 Intent i = new Intent(getActivity(), Recolectar.class);
-                i.putExtra("ColectaID", colectaId);
-                i.putExtra("EtiquetaID", etiquetaId);
+                i.putExtra("COLECTA_ID", colectaId);
+                i.putExtra("ETIQUETA_ID", etiquetaId);
                 startActivity(i);
             }
         });

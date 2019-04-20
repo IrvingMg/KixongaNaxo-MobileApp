@@ -59,10 +59,10 @@ import static android.support.v4.content.ContextCompat.getDataDir;
 import static android.support.v4.content.ContextCompat.getSystemService;
 
 public class InfoBasicaFragment extends Fragment {
-    private static final String ETIQUETA_ID = "EtiquetaID";
-    private static final String NUEVA_ETIQUETA = "NuevaEtiqueta";
-    private static final String PATH_FOTOS = "PathFotos";
-    private static final String PATH_NOTAS = "PathNotas";
+    private static final String ETIQUETA_ID = "ETIQUETA_ID";
+    private static final String NUEVA_ETIQUETA = "NUEVA_ETIQUETA";
+    private static final String PATH_FOTOS = "PATH_FOTOS";
+    private static final String PATH_NOTAS = "PATH_NOTAS";
     private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
     private final String TAG = "KixongaNaxo";
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();

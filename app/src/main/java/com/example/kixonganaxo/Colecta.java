@@ -4,10 +4,12 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.RequiresApi;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.design.widget.TabLayout;
@@ -52,8 +54,6 @@ public class Colecta extends AppCompatActivity implements
     private final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private final FirebaseStorage storage = FirebaseStorage.getInstance();
-    private SectionsPagerAdapter mSectionsPagerAdapter;
-    private ViewPager mViewPager;
     private String colectaId;
     private String lugarColecta;
     private ArrayList<Map<String, String>> participantes;
@@ -69,8 +69,8 @@ public class Colecta extends AppCompatActivity implements
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
-        mViewPager = findViewById(R.id.container);
+        SectionsPagerAdapter mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+        ViewPager mViewPager = findViewById(R.id.container);
         mViewPager.setAdapter(mSectionsPagerAdapter);
 
         TabLayout tabLayout = findViewById(R.id.tabs);
@@ -84,7 +84,7 @@ public class Colecta extends AppCompatActivity implements
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(usuarioParticipante == true) {
+                if(usuarioParticipante) {
                     Intent i = new Intent(Colecta.this, Recolectar.class);
                     i.putExtra("COLECTA_ID", colectaId);
                     i.putExtra("LUGAR_COLECTA", lugarColecta);
@@ -146,6 +146,7 @@ public class Colecta extends AppCompatActivity implements
         return true;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
@@ -183,7 +184,7 @@ public class Colecta extends AppCompatActivity implements
     }
 
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
-        public SectionsPagerAdapter(FragmentManager fm) {
+        SectionsPagerAdapter(FragmentManager fm) {
             super(fm);
         }
 
@@ -220,7 +221,7 @@ public class Colecta extends AppCompatActivity implements
         for (int i = 0; i < participantes.size(); i++) {
             String id = participantes.get(i).get("id_usuario");
 
-            if (id.equals(usuarioId) == true) {
+            if (id.equals(usuarioId)) {
                 usuarioParticipante = true;
                 return;
             }
@@ -265,16 +266,15 @@ public class Colecta extends AppCompatActivity implements
         String etiquetaId;
 
         String[] etiquetas = directorio.list();
-        for (int i = 0; i < etiquetas.length; i++)
-        {
-            File dir = new File(directorio, etiquetas[i]);
+        for (String etiqueta : etiquetas) {
+            File dir = new File(directorio, etiqueta);
             ArrayList<String> fotos = new ArrayList<>();
             ArrayList<String> audios = new ArrayList<>();
 
 
             String[] archivos = dir.list();
-            for (int j = 0; j < archivos.length; j++) {
-                String pathArchivo = new File(dir, archivos[j]).toString();
+            for (String archivo : archivos) {
+                String pathArchivo = new File(dir, archivo).toString();
                 Uri uriArchivo = Uri.fromFile(new File(pathArchivo));
 
                 // Obtiene nombre del archivo
@@ -285,7 +285,7 @@ public class Colecta extends AppCompatActivity implements
                 index = pathArchivo.lastIndexOf(".");
                 tipoArchivo = pathArchivo.substring(index);
 
-                if (tipoArchivo.equals(".jpg") == true) {
+                if (tipoArchivo.equals(".jpg")) {
                     directorioStorage = "fotos";
                     fotos.add(nombreArchivo);
                 } else {
@@ -294,7 +294,7 @@ public class Colecta extends AppCompatActivity implements
                 }
                 guardarArchivoCloud(uriArchivo, directorioStorage);
             }
-            etiquetaId = etiquetas[i];
+            etiquetaId = etiqueta;
             registrarArchivos(etiquetaId, fotos, audios);
         }
     }
