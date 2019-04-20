@@ -12,11 +12,13 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.media.MediaRecorder;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Looper;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.annotation.RequiresApi;
 import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
@@ -46,6 +48,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -63,15 +66,12 @@ public class InfoBasicaFragment extends Fragment {
     private static final String NUEVA_ETIQUETA = "NUEVA_ETIQUETA";
     private static final String PATH_FOTOS = "PATH_FOTOS";
     private static final String PATH_NOTAS = "PATH_NOTAS";
-    private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
     private final String TAG = "KixongaNaxo";
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
-    private OnFragmentInteractionListener mListener;
     private MediaRecorder recorder = null;
     private boolean mStartRecording = true;
     private boolean permissionToRecordAccepted = false;
     private String [] permissions = {Manifest.permission.RECORD_AUDIO};
-    private Map<String, Object> docEtiqueta;
     private String fotoName = null;
     private List<String> dataFotos = new ArrayList<>();
     private ArrayAdapter<String> adapterFotos;
@@ -112,7 +112,7 @@ public class InfoBasicaFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_info_basica, container, false);
         initInfoBasica(view);
@@ -124,23 +124,28 @@ public class InfoBasicaFragment extends Fragment {
         initGrabadora(v);
         initCamara(v);
 
-        if (nuevaEtiqueta == false) {
+        if (!nuevaEtiqueta) {
+            List<String> listaNotas = new ArrayList<>();
+            File dirNotas = new File(directorioNotas);
+            if (dirNotas.exists()) {
+                Collections.addAll(listaNotas, dirNotas.list());
+            }
 
-            List<String> listaNotas = getListaArchivos(directorioNotas);
             if (listaNotas.size() > 0) {
                 dataNotas.clear();
-                for (String nota : listaNotas) {
-                    dataNotas.add(nota);
-                }
+                dataNotas.addAll(listaNotas);
                 adapterNotas.notifyDataSetChanged();
             }
 
-            List<String> listaFotos = getListaArchivos(directorioFotos);
+            List<String> listaFotos = new ArrayList<>();
+            File dirFotos = new File(directorioFotos);
+            if (dirFotos.exists()) {
+                Collections.addAll(listaFotos, dirFotos.list());
+            }
+
             if (listaFotos.size() > 0) {
                 dataFotos.clear();
-                for (String foto : listaFotos) {
-                    dataFotos.add(foto);
-                }
+                dataFotos.addAll(listaFotos);
                 adapterFotos.notifyDataSetChanged();
             }
 
@@ -150,46 +155,25 @@ public class InfoBasicaFragment extends Fragment {
                         @Override
                         public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
                             if (e != null) {
-                                Log.w(TAG, "Listen error", e);
+                                String error = e.getMessage();
+                                Toast.makeText(getActivity(), error, Toast.LENGTH_LONG).show();
                                 return;
                             }
+                            Map<String, Object> docEtiqueta = documentSnapshot.getData();
 
-                            if (documentSnapshot != null && documentSnapshot.exists()) {
-                                docEtiqueta = documentSnapshot.getData();
-
-                                TextInputLayout nombreComun = v.findViewById(R.id.nombre_comun);
-                                String nombre = docEtiqueta.get("nombre_comun").toString();
-                                nombreComun.getEditText().setText(nombre);
-
-                                TextInputLayout latitud = v.findViewById(R.id.latitud);
-                                TextInputLayout longitud = v.findViewById(R.id.longitud);
-                                GeoPoint geoPoint = (GeoPoint) docEtiqueta.get("ubicacion");
-                                Double lat = geoPoint.getLatitude();
-                                Double lng = geoPoint.getLongitude();
-                                latitud.getEditText().setText(lat.toString());
-                                longitud.getEditText().setText(lng.toString());
-                            } else {
-                                Log.d(TAG, "Data: null");
-                            }
+                            TextInputLayout nombreComun = v.findViewById(R.id.nombre_comun);
+                            String nombre = docEtiqueta.get("nombre_comun").toString();
+                            nombreComun.getEditText().setText(nombre);
+                            TextInputLayout latitud = v.findViewById(R.id.latitud);
+                            TextInputLayout longitud = v.findViewById(R.id.longitud);
+                            GeoPoint geoPoint = (GeoPoint) docEtiqueta.get("ubicacion");
+                            double lat = geoPoint.getLatitude();
+                            double lng = geoPoint.getLongitude();
+                            latitud.getEditText().setText(""+lat);
+                            longitud.getEditText().setText(""+lng);
                         }
                     });
         }
-    }
-
-    private List<String> getListaArchivos(String directory) {
-        List<String> lista = new ArrayList<>();
-        File dir = new File(directory);
-
-        if (dir.isDirectory())
-        {
-            String[] children = dir.list();
-            for (int i = 0; i < children.length; i++)
-            {
-                lista.add(children[i]);
-            }
-        }
-
-        return lista;
     }
 
     private void initGPS(final View v) {
@@ -200,7 +184,6 @@ public class InfoBasicaFragment extends Fragment {
             public void onLocationChanged(Location location) {
                 TextInputLayout latitud = v.findViewById(R.id.latitud);
                 TextInputLayout longitud = v.findViewById(R.id.longitud);
-                Location mlocation = location;
                 latitud.getEditText().setText(String.valueOf(location.getLatitude()));
                 longitud.getEditText().setText(String.valueOf(location.getLongitude()));
             }
@@ -233,11 +216,13 @@ public class InfoBasicaFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 if (ActivityCompat.checkSelfPermission(getContext(),
-                        Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(getContext(),
-                        Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                        Manifest.permission.ACCESS_FINE_LOCATION)
+                        != PackageManager.PERMISSION_GRANTED
+                        && ActivityCompat.checkSelfPermission(getContext(),
+                        Manifest.permission.ACCESS_COARSE_LOCATION)
+                        != PackageManager.PERMISSION_GRANTED) {
                     return;
                 }
-
                 LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
                 locationManager.requestSingleUpdate(criteria, locationListener, looper);
             }
@@ -252,9 +237,10 @@ public class InfoBasicaFragment extends Fragment {
                 android.R.layout.simple_list_item_1, android.R.id.text1, dataNotas);
         listaNotas.setAdapter(adapterNotas);
 
-        ActivityCompat.requestPermissions(getActivity(), permissions, REQUEST_RECORD_AUDIO_PERMISSION);
+        ActivityCompat.requestPermissions(getActivity(), permissions, 200);
         final Button record = v.findViewById(R.id.audio);
         record.setOnClickListener(new View.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
             @Override
             public void onClick(View v) {
                 onRecord(mStartRecording);
@@ -274,7 +260,7 @@ public class InfoBasicaFragment extends Fragment {
         // Fotos
         dataFotos.clear();
         ListView listaFotos = v.findViewById(R.id.lista_fotos);
-        adapterFotos = new ArrayAdapter<String>(getActivity(),
+        adapterFotos = new ArrayAdapter<>(getActivity(),
                 android.R.layout.simple_list_item_1, android.R.id.text1, dataFotos);
         listaFotos.setAdapter(adapterFotos);
 
@@ -291,15 +277,13 @@ public class InfoBasicaFragment extends Fragment {
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         Uri file = Uri.fromFile(getOutputMediaFile());
         intent.putExtra(MediaStore.EXTRA_OUTPUT, file);
-
         startActivityForResult(intent, 100);
     }
 
     private  File getOutputMediaFile(){
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         fotoName = "IMG_"+ timeStamp + ".jpg";
-        return new File(directorioFotos + File.separator +
-                "IMG_"+ timeStamp + ".jpg");
+        return new File(directorioFotos + File.separator + "IMG_"+ timeStamp + ".jpg");
     }
 
 
@@ -318,7 +302,7 @@ public class InfoBasicaFragment extends Fragment {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch (requestCode){
-            case REQUEST_RECORD_AUDIO_PERMISSION:
+            case 200:
                 permissionToRecordAccepted  = grantResults[0] == PackageManager.PERMISSION_GRANTED;
                 break;
         }
@@ -326,6 +310,7 @@ public class InfoBasicaFragment extends Fragment {
 
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
     private void onRecord(boolean start) {
         if (start) {
             startRecording();
@@ -334,6 +319,7 @@ public class InfoBasicaFragment extends Fragment {
         }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
     private void startRecording() {
         notaName = directorioNotas + File.separator + UUID.randomUUID().toString() +".aac";
         recorder = new MediaRecorder();
@@ -345,20 +331,19 @@ public class InfoBasicaFragment extends Fragment {
         try {
             recorder.prepare();
         } catch (IOException e) {
-            Log.e(TAG, "prepare() failed");
+            String error = e.getMessage();
+            Toast.makeText(getActivity(), error, Toast.LENGTH_LONG).show();
         }
-
         recorder.start();
     }
 
     private void stopRecording() {
-        int index = notaName.lastIndexOf("/");
-        String nota = notaName.substring(index + 1);
-
         recorder.stop();
         recorder.release();
         recorder = null;
 
+        int index = notaName.lastIndexOf("/");
+        String nota = notaName.substring(index + 1);
         dataNotas.add(nota);
         adapterNotas.notifyDataSetChanged();
     }
@@ -366,9 +351,7 @@ public class InfoBasicaFragment extends Fragment {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        if (context instanceof OnFragmentInteractionListener) {
-            mListener = (OnFragmentInteractionListener) context;
-        } else {
+        if (!(context instanceof OnFragmentInteractionListener)) {
             throw new RuntimeException(context.toString()
                     + " must implement OnFragmentInteractionListener");
         }
@@ -377,9 +360,9 @@ public class InfoBasicaFragment extends Fragment {
     @Override
     public void onDetach() {
         super.onDetach();
-        mListener = null;
     }
 
-    public interface OnFragmentInteractionListener {
+    // Interface obligatoria
+    interface OnFragmentInteractionListener {
     }
 }
