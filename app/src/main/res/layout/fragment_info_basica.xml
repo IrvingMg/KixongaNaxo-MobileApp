@@ -34,7 +34,7 @@
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:text="Ubicación"
-                android:alpha="0.6"
+                android:textColor="#808080"
                 android:textAppearance="?attr/textAppearanceListItem"/>
 
             <Button
@@ -96,7 +96,7 @@
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:text="Fotografías"
-                android:alpha="0.6"
+                android:textColor="#808080"
                 android:textAppearance="?attr/textAppearanceListItem"/>
 
             <Button
@@ -112,21 +112,32 @@
             android:id="@+id/lista_fotos"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
             android:layout_below="@+id/encabezado_fotos"/>
+
+        <TextView
+            android:id="@+id/mensajeVacioFotos"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="4dp"
+            android:layout_below="@id/lista_fotos"
+            android:text="No se encontraron resultados."
+            android:visibility="gone"/>
 
         <LinearLayout
             android:id="@+id/encabezado_notas"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:layout_below="@id/lista_fotos">
+            android:layout_below="@id/mensajeVacioFotos">
 
             <TextView
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:text="Notas de campo"
-                android:alpha="0.6"
+                android:textColor="#808080"
                 android:textAppearance="?attr/textAppearanceListItem"/>
 
             <Button
@@ -142,7 +153,18 @@
             android:id="@+id/lista_notas"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
             android:layout_below="@id/encabezado_notas"/>
+
+        <TextView
+            android:id="@+id/mensajeVacioNotas"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="4dp"
+            android:layout_below="@id/encabezado_notas"
+            android:text="No se encontraron resultados."
+            android:visibility="gone"/>
 
     </RelativeLayout>
 </ScrollView>

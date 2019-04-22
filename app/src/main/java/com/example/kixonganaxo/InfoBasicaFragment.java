@@ -1,11 +1,9 @@
 package com.example.kixonganaxo;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
@@ -14,7 +12,6 @@ import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Looper;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
@@ -22,7 +19,6 @@ import android.support.annotation.RequiresApi;
 import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.FileProvider;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,27 +26,21 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.GeoPoint;
 
-import org.w3c.dom.Text;
-
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -58,8 +48,6 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 
 import static android.app.Activity.RESULT_OK;
-import static android.support.v4.content.ContextCompat.getDataDir;
-import static android.support.v4.content.ContextCompat.getSystemService;
 
 public class InfoBasicaFragment extends Fragment {
     private static final String ETIQUETA_ID = "ETIQUETA_ID";
@@ -115,64 +103,64 @@ public class InfoBasicaFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_info_basica, container, false);
-        initInfoBasica(view);
+
+        initGPS(view);
+        initGrabadora(view);
+        initCamara(view);
+        if (!nuevaEtiqueta) {
+            initInfoBasica(view);
+        }
+
         return view;
     }
 
     private void initInfoBasica(final View v) {
-        initGPS(v);
-        initGrabadora(v);
-        initCamara(v);
-
-        if (!nuevaEtiqueta) {
-            List<String> listaNotas = new ArrayList<>();
-            File dirNotas = new File(directorioNotas);
-            if (dirNotas.exists()) {
-                Collections.addAll(listaNotas, dirNotas.list());
-            }
-
-            if (listaNotas.size() > 0) {
-                dataNotas.clear();
-                dataNotas.addAll(listaNotas);
-                adapterNotas.notifyDataSetChanged();
-            }
-
-            List<String> listaFotos = new ArrayList<>();
-            File dirFotos = new File(directorioFotos);
-            if (dirFotos.exists()) {
-                Collections.addAll(listaFotos, dirFotos.list());
-            }
-
-            if (listaFotos.size() > 0) {
-                dataFotos.clear();
-                dataFotos.addAll(listaFotos);
-                adapterFotos.notifyDataSetChanged();
-            }
-
-            db.collection("etiquetas")
-                    .document(etiquetaId)
-                    .addSnapshotListener(new EventListener<DocumentSnapshot>() {
-                        @Override
-                        public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
-                            if (e != null) {
-                                String error = e.getMessage();
-                                Toast.makeText(getActivity(), error, Toast.LENGTH_LONG).show();
-                                return;
-                            }
-                            Map<String, Object> docEtiqueta = documentSnapshot.getData();
-
-                            TextInputLayout nombreComun = v.findViewById(R.id.nombre_comun);
-                            String nombre = docEtiqueta.get("nombre_comun").toString();
-                            nombreComun.getEditText().setText(nombre);
-                            TextInputLayout latitud = v.findViewById(R.id.latitud);
-                            TextInputLayout longitud = v.findViewById(R.id.longitud);
-                            GeoPoint geoPoint = (GeoPoint) docEtiqueta.get("ubicacion");
-                            double lat = geoPoint.getLatitude();
-                            double lng = geoPoint.getLongitude();
-                            latitud.getEditText().setText(""+lat);
-                            longitud.getEditText().setText(""+lng);
+        db.collection("etiquetas")
+                .document(etiquetaId)
+                .addSnapshotListener(new EventListener<DocumentSnapshot>() {
+                    @Override
+                    public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
+                        if (e != null) {
+                            String error = e.getMessage();
+                            Toast.makeText(getActivity(), error, Toast.LENGTH_LONG).show();
+                            return;
                         }
-                    });
+                        Map<String, Object> docEtiqueta = documentSnapshot.getData();
+
+                        TextInputLayout nombreComun = v.findViewById(R.id.nombre_comun);
+                        String nombre = docEtiqueta.get("nombre_comun").toString();
+                        nombreComun.getEditText().setText(nombre);
+                        TextInputLayout latitud = v.findViewById(R.id.latitud);
+                        TextInputLayout longitud = v.findViewById(R.id.longitud);
+                        GeoPoint geoPoint = (GeoPoint) docEtiqueta.get("ubicacion");
+                        double lat = geoPoint.getLatitude();
+                        double lng = geoPoint.getLongitude();
+                        latitud.getEditText().setText(""+lat);
+                        longitud.getEditText().setText(""+lng);
+                    }
+                });
+    }
+
+    private void initListaView(String directorio, List<String> datosLista,
+                               ArrayAdapter<String> adapterLista, String tipoLista, final View v) {
+        List<String> nuevosDatos = new ArrayList<>();
+        File dir = new File(directorio);
+        if (dir.exists()) {
+            Collections.addAll(nuevosDatos, dir.list());
+        }
+
+        if (nuevosDatos.size() > 0) {
+            datosLista.clear();
+            datosLista.addAll(nuevosDatos);
+            adapterLista.notifyDataSetChanged();
+        } else {
+            if (tipoLista.equals("fotos")) {
+                TextView listaVacia = v.findViewById(R.id.mensajeVacioFotos);
+                listaVacia.setVisibility(View.VISIBLE);
+            } else {
+                TextView listaVacia = v.findViewById(R.id.mensajeVacioNotas);
+                listaVacia.setVisibility(View.VISIBLE);
+            }
         }
     }
 
@@ -236,6 +224,7 @@ public class InfoBasicaFragment extends Fragment {
         adapterNotas = new ArrayAdapter<>(getActivity(),
                 android.R.layout.simple_list_item_1, android.R.id.text1, dataNotas);
         listaNotas.setAdapter(adapterNotas);
+        initListaView(directorioNotas, dataNotas, adapterNotas, "notas", v);
 
         ActivityCompat.requestPermissions(getActivity(), permissions, 200);
         final Button record = v.findViewById(R.id.audio);
@@ -263,6 +252,7 @@ public class InfoBasicaFragment extends Fragment {
         adapterFotos = new ArrayAdapter<>(getActivity(),
                 android.R.layout.simple_list_item_1, android.R.id.text1, dataFotos);
         listaFotos.setAdapter(adapterFotos);
+        initListaView(directorioFotos, dataFotos, adapterFotos, "fotos", v);
 
         Button foto = v.findViewById(R.id.camara);
         foto.setOnClickListener(new View.OnClickListener() {
