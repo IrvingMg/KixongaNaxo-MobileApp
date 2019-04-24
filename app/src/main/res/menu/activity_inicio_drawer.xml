@@ -10,14 +10,14 @@
             android:id="@+id/nav_home"
             android:icon="@drawable/ic_menu_home"
             android:title="Inicio" />
-        <item
+        <!-- <item
             android:id="@+id/nav_notifications"
             android:icon="@drawable/ic_menu_notifications"
             android:title="Notificaciones" />
         <item
             android:id="@+id/nav_history"
             android:icon="@drawable/ic_menu_history"
-            android:title="Mis etiquetas" />
+            android:title="Mis colectas" /> -->
     </group>
     <group
         android:id="@+id/group_settings"

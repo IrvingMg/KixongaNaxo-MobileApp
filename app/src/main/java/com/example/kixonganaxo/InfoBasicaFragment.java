@@ -1,7 +1,9 @@
 package com.example.kixonganaxo;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
@@ -23,8 +25,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -57,7 +61,6 @@ public class InfoBasicaFragment extends Fragment {
     private final String TAG = "KixongaNaxo";
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private MediaRecorder recorder = null;
-    private boolean mStartRecording = true;
     private boolean permissionToRecordAccepted = false;
     private String [] permissions = {Manifest.permission.RECORD_AUDIO};
     private String fotoName = null;
@@ -70,7 +73,7 @@ public class InfoBasicaFragment extends Fragment {
     private boolean nuevaEtiqueta;
     private String directorioNotas;
     private String directorioFotos;
-
+    private ProgressDialog alerta;
 
     public InfoBasicaFragment() {
         // Required empty public constructor
@@ -114,56 +117,57 @@ public class InfoBasicaFragment extends Fragment {
         return view;
     }
 
-    private void initInfoBasica(final View v) {
-        db.collection("etiquetas")
-                .document(etiquetaId)
-                .addSnapshotListener(new EventListener<DocumentSnapshot>() {
-                    @Override
-                    public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
-                        if (e != null) {
-                            String error = e.getMessage();
-                            Toast.makeText(getActivity(), error, Toast.LENGTH_LONG).show();
-                            return;
-                        }
-                        Map<String, Object> docEtiqueta = documentSnapshot.getData();
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == 100) {
+            if (resultCode == RESULT_OK) {
+                if (dataFotos.size() == 0) {
+                    TextView listaVacia = getView().findViewById(R.id.mensajeVacioFotos);
+                    listaVacia.setVisibility(View.GONE);
+                }
+                dataFotos.add(fotoName);
+                adapterFotos.notifyDataSetChanged();
+                fotoName = "";
 
-                        TextInputLayout nombreComun = v.findViewById(R.id.nombre_comun);
-                        String nombre = docEtiqueta.get("nombre_comun").toString();
-                        nombreComun.getEditText().setText(nombre);
-                        TextInputLayout latitud = v.findViewById(R.id.latitud);
-                        TextInputLayout longitud = v.findViewById(R.id.longitud);
-                        GeoPoint geoPoint = (GeoPoint) docEtiqueta.get("ubicacion");
-                        double lat = geoPoint.getLatitude();
-                        double lng = geoPoint.getLongitude();
-                        latitud.getEditText().setText(""+lat);
-                        longitud.getEditText().setText(""+lng);
-                    }
-                });
-    }
-
-    private void initListaView(String directorio, List<String> datosLista,
-                               ArrayAdapter<String> adapterLista, String tipoLista, final View v) {
-        List<String> nuevosDatos = new ArrayList<>();
-        File dir = new File(directorio);
-        if (dir.exists()) {
-            Collections.addAll(nuevosDatos, dir.list());
-        }
-
-        if (nuevosDatos.size() > 0) {
-            datosLista.clear();
-            datosLista.addAll(nuevosDatos);
-            adapterLista.notifyDataSetChanged();
-        } else {
-            if (tipoLista.equals("fotos")) {
-                TextView listaVacia = v.findViewById(R.id.mensajeVacioFotos);
-                listaVacia.setVisibility(View.VISIBLE);
-            } else {
-                TextView listaVacia = v.findViewById(R.id.mensajeVacioNotas);
-                listaVacia.setVisibility(View.VISIBLE);
+                ListView listaFotos = getView().findViewById(R.id.lista_fotos);
+                setListViewHeightBasedOnChildren(listaFotos);
+                Toast.makeText(getActivity(), "Fotografía guardada en: " + directorioFotos,
+                        Toast.LENGTH_LONG).show();
             }
         }
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode){
+            case 200:
+                permissionToRecordAccepted  = grantResults[0] == PackageManager.PERMISSION_GRANTED;
+                break;
+        }
+        if (!permissionToRecordAccepted ) getActivity().finish();
+
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        if (!(context instanceof OnFragmentInteractionListener)) {
+            throw new RuntimeException(context.toString()
+                    + " must implement OnFragmentInteractionListener");
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+    }
+
+    // Interface obligatoria
+    interface OnFragmentInteractionListener {
+    }
+
+    // Métodos privados
     private void initGPS(final View v) {
         Button button = v.findViewById(R.id.GPS);
 
@@ -211,20 +215,30 @@ public class InfoBasicaFragment extends Fragment {
                         != PackageManager.PERMISSION_GRANTED) {
                     return;
                 }
-                LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
+                LocationManager locationManager = (LocationManager) getActivity()
+                        .getSystemService(Context.LOCATION_SERVICE);
                 locationManager.requestSingleUpdate(criteria, locationListener, looper);
             }
         });
     }
 
     private void initGrabadora(View v) {
-        // Inicializar lista de audios
         dataNotas.clear();
         ListView listaNotas = v.findViewById(R.id.lista_notas);
+        listaNotas.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                intent.setType("*/*");
+                startActivity(intent);
+            }
+        });
+
         adapterNotas = new ArrayAdapter<>(getActivity(),
                 android.R.layout.simple_list_item_1, android.R.id.text1, dataNotas);
         listaNotas.setAdapter(adapterNotas);
         initListaView(directorioNotas, dataNotas, adapterNotas, "notas", v);
+        setListViewHeightBasedOnChildren(listaNotas);
 
         ActivityCompat.requestPermissions(getActivity(), permissions, 200);
         final Button record = v.findViewById(R.id.audio);
@@ -232,81 +246,28 @@ public class InfoBasicaFragment extends Fragment {
             @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
             @Override
             public void onClick(View v) {
-                onRecord(mStartRecording);
-                if (mStartRecording) {
-                    record.setText("Detener");
-                    v.setTag(0);
-                } else {
-                    record.setText("Grabar Nota");
-                    v.setTag(1);
-                }
-                mStartRecording = !mStartRecording;
+                startRecording();
+                alerta = new ProgressDialog(getActivity());
+                alerta.setMessage("Grabando...");
+                alerta.setCancelable(false);
+                alerta.setButton(DialogInterface.BUTTON_NEGATIVE, "Detener", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if (dataNotas.size() == 0) {
+                            TextView listaVacia = getView().findViewById(R.id.mensajeVacioNotas);
+                            listaVacia.setVisibility(View.GONE);
+                        }
+
+                        stopRecording();
+                        ListView listaNotas = getView().findViewById(R.id.lista_notas);
+                        setListViewHeightBasedOnChildren(listaNotas);
+                        Toast.makeText(getActivity(), "Nota guardada en: " + directorioFotos,
+                                Toast.LENGTH_LONG).show();
+                    }
+                });
+                alerta.show();
             }
         });
-    }
-
-    private void initCamara(View v) {
-        // Fotos
-        dataFotos.clear();
-        ListView listaFotos = v.findViewById(R.id.lista_fotos);
-        adapterFotos = new ArrayAdapter<>(getActivity(),
-                android.R.layout.simple_list_item_1, android.R.id.text1, dataFotos);
-        listaFotos.setAdapter(adapterFotos);
-        initListaView(directorioFotos, dataFotos, adapterFotos, "fotos", v);
-
-        Button foto = v.findViewById(R.id.camara);
-        foto.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                takePicture();
-            }
-        });
-    }
-
-    public void takePicture() {
-        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        Uri file = Uri.fromFile(getOutputMediaFile());
-        intent.putExtra(MediaStore.EXTRA_OUTPUT, file);
-        startActivityForResult(intent, 100);
-    }
-
-    private  File getOutputMediaFile(){
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        fotoName = "IMG_"+ timeStamp + ".jpg";
-        return new File(directorioFotos + File.separator + "IMG_"+ timeStamp + ".jpg");
-    }
-
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == 100) {
-            if (resultCode == RESULT_OK) {
-                dataFotos.add(fotoName);
-                adapterFotos.notifyDataSetChanged();
-                fotoName = "";
-            }
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode){
-            case 200:
-                permissionToRecordAccepted  = grantResults[0] == PackageManager.PERMISSION_GRANTED;
-                break;
-        }
-        if (!permissionToRecordAccepted ) getActivity().finish();
-
-    }
-
-    @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
-    private void onRecord(boolean start) {
-        if (start) {
-            startRecording();
-        } else {
-            stopRecording();
-        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
@@ -338,21 +299,113 @@ public class InfoBasicaFragment extends Fragment {
         adapterNotas.notifyDataSetChanged();
     }
 
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        if (!(context instanceof OnFragmentInteractionListener)) {
-            throw new RuntimeException(context.toString()
-                    + " must implement OnFragmentInteractionListener");
+    private void initCamara(View v) {
+        dataFotos.clear();
+        ListView listaFotos = v.findViewById(R.id.lista_fotos);
+        listaFotos.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                intent.setType("*/*");
+                startActivity(intent);
+            }
+        });
+        adapterFotos = new ArrayAdapter<>(getActivity(),
+                android.R.layout.simple_list_item_1, android.R.id.text1, dataFotos);
+        listaFotos.setAdapter(adapterFotos);
+        initListaView(directorioFotos, dataFotos, adapterFotos, "fotos", v);
+        setListViewHeightBasedOnChildren(listaFotos);
+
+        Button foto = v.findViewById(R.id.camara);
+        foto.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                takePicture();
+            }
+        });
+    }
+
+    public void takePicture() {
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        Uri file = Uri.fromFile(getOutputMediaFile());
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, file);
+        startActivityForResult(intent, 100);
+    }
+
+    private  File getOutputMediaFile(){
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        fotoName = "IMG_"+ timeStamp + ".jpg";
+        return new File(directorioFotos + File.separator + "IMG_"+ timeStamp + ".jpg");
+    }
+
+    private void initInfoBasica(final View v) {
+        db.collection("etiquetas")
+                .document(etiquetaId)
+                .addSnapshotListener(new EventListener<DocumentSnapshot>() {
+                    @Override
+                    public void onEvent(@Nullable DocumentSnapshot documentSnapshot, @Nullable FirebaseFirestoreException e) {
+                        if (e != null) {
+                            String error = e.getMessage();
+                            Toast.makeText(getActivity(), error, Toast.LENGTH_LONG).show();
+                            return;
+                        }
+                        Map<String, Object> docEtiqueta = documentSnapshot.getData();
+
+                        TextInputLayout nombreComun = v.findViewById(R.id.nombre_comun);
+                        String nombre = docEtiqueta.get("nombre_comun").toString();
+                        nombreComun.getEditText().setText(nombre);
+                        TextInputLayout latitud = v.findViewById(R.id.latitud);
+                        TextInputLayout longitud = v.findViewById(R.id.longitud);
+                        GeoPoint geoPoint = (GeoPoint) docEtiqueta.get("ubicacion");
+                        double lat = geoPoint.getLatitude();
+                        double lng = geoPoint.getLongitude();
+                        latitud.getEditText().setText(""+lat);
+                        longitud.getEditText().setText(""+lng);
+                    }
+                });
+    }
+
+    private void initListaView(String directorio, List<String> datosLista,
+                               ArrayAdapter<String> adapterLista, String tipoLista, final View v) {
+        List<String> nuevosDatos = new ArrayList<>();
+        File dir = new File(directorio);
+        if (dir.exists()) {
+            Collections.addAll(nuevosDatos, dir.list());
+        }
+
+        if (nuevosDatos.size() > 0) {
+            datosLista.clear();
+            datosLista.addAll(nuevosDatos);
+            adapterLista.notifyDataSetChanged();
+        } else {
+            TextView listaVacia;
+            if (tipoLista.equals("fotos")) {
+                listaVacia = v.findViewById(R.id.mensajeVacioFotos);
+            } else {
+                listaVacia = v.findViewById(R.id.mensajeVacioNotas);
+            }
+            listaVacia.setVisibility(View.VISIBLE);
         }
     }
 
-    @Override
-    public void onDetach() {
-        super.onDetach();
-    }
+    // Método tomado de:
+    // https://stackoverflow.com/questions/22710093/android-listview-not-scrollable/22710364
+    public static void setListViewHeightBasedOnChildren(ListView listView) {
+        ListAdapter listAdapter = listView.getAdapter();
+        if (listAdapter == null) {
+            return;
+        }
 
-    // Interface obligatoria
-    interface OnFragmentInteractionListener {
+        int totalHeight = 0;
+        for (int i = 0, len = listAdapter.getCount(); i < len; i++) {
+            View listItem = listAdapter.getView(i, null, listView);
+            listItem.measure(0, 0);
+            totalHeight += listItem.getMeasuredHeight();
+        }
+
+        ViewGroup.LayoutParams params = listView.getLayoutParams();
+        params.height = totalHeight
+                + (listView.getDividerHeight() * (listAdapter.getCount() - 1));
+        listView.setLayoutParams(params);
     }
 }
