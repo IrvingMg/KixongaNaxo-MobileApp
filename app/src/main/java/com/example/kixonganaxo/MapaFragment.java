@@ -119,16 +119,26 @@ public class MapaFragment extends SupportMapFragment implements OnMapReadyCallba
                         }
 
                         for (DocumentSnapshot documentSnapshot : queryDocumentSnapshots.getDocuments()) {
-                            String nombre_comun = documentSnapshot.getData().get("nombre_comun").toString();
-                            String fecha_colecta = documentSnapshot.getData().get("fecha_colecta").toString();
+                            String nombre_comun = "";
+                            if (documentSnapshot.getData().get("nombre_comun") != null) {
+                                nombre_comun = documentSnapshot.getData().get("nombre_comun").toString();
+                            }
+                            String fecha_colecta = "";
+                            if (documentSnapshot.getData().get("fecha_colecta") != null) {
+                                fecha_colecta = documentSnapshot.getData().get("fecha_colecta").toString();
+                            }
                             GeoPoint ubicacion = (GeoPoint) documentSnapshot.getData().get("ubicacion");
-                            LatLng coordenadas = new LatLng(ubicacion.getLatitude(), ubicacion.getLongitude());
+
+                            LatLng coordenadas = new LatLng(0.0, 0.0);
+                            if (ubicacion != null) {
+                                coordenadas = new LatLng(ubicacion.getLatitude(), ubicacion.getLongitude());
+                            }
 
                             Marker mEjemplar = mapa.addMarker(new MarkerOptions()
                                     .position(coordenadas)
                                     .title(nombre_comun)
                                     .snippet("Fecha: " + fecha_colecta)
-                                    .snippet("Lat: " + ubicacion.getLatitude() + " Lng: " + ubicacion.getLongitude()));
+                                    .snippet("Lat: " + coordenadas.latitude  + " Lng: " + coordenadas.longitude));
                             mEjemplar.setTag(0);
                         }
                     }
